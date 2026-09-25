@@ -117,6 +117,10 @@ dialog{overflow:visible}
 .add{display:grid;grid-template-columns:minmax(0,1fr) 200px 200px 140px auto;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:var(--shadow)}
 .add input,.add select,.field input,.field select{height:38px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:0 12px;min-width:0;width:100%}
 .add input:focus,.add select:focus,.field input:focus{outline:none;border-color:var(--ink);background:var(--surface)}
+.field textarea{min-height:76px;max-height:40vh;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:9px 12px;width:100%;resize:vertical;font:inherit;line-height:1.45;color:inherit}
+.field select{appearance:auto;cursor:pointer}
+.rep-ic{display:inline-block;vertical-align:-1px;margin-left:5px;opacity:.55}
+.field textarea:focus{outline:none;border-color:var(--ink);background:var(--surface)}
 .add input::placeholder{color:var(--muted)}
 .primary{height:38px;padding:0 18px;border:0;border-radius:8px;background:var(--ink);color:var(--surface);font-weight:600;cursor:pointer;white-space:nowrap}
 .primary:hover{opacity:.9}
@@ -625,6 +629,8 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       <label><input type="radio" name="add-state" id="add-st-waiting" value="waiting"><span data-icon="waiting">En attente</span></label>
     </fieldset>
     <p class="hint" id="add-hint" hidden>Une tâche en cours ou en attente est placée sur aujourd’hui.</p>
+    <label class="field"><span>Répéter</span><select id="add-repeat"></select></label>
+    <label class="field"><span>Note</span><textarea id="add-note" rows="3" maxlength="2000" placeholder="Contexte, lien, personne à relancer…"></textarea></label>
     <div class="ed-actions ed-actions-end">
       <button class="primary" type="submit">Ajouter la tâche</button>
     </div>
@@ -660,6 +666,9 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       <label><input type="radio" name="ed-state" id="ed-st-waiting" value="waiting"><span data-icon="waiting">En attente</span></label>
       <label><input type="radio" name="ed-state" id="ed-st-done" value="done"><span data-icon="done">Terminé</span></label>
     </fieldset>
+    <label class="field"><span>Répéter</span><select id="ed-repeat"></select></label>
+    <p class="hint" id="ed-rep-hint" hidden></p>
+    <label class="field"><span>Note</span><textarea id="ed-note" rows="3" maxlength="2000" placeholder="Ajouter une note…"></textarea></label>
     <dl class="info" id="ed-info" aria-label="Historique"></dl>
     <div class="ed-actions">
       <button class="danger" type="button" id="ed-delete">Supprimer</button>
@@ -697,7 +706,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       <label class="ex-opt"><input type="radio" name="ex-scope" value="upcoming" checked><span><b>Tâches à venir</b><small>À faire, en cours et en attente · <span id="ex-n-upcoming">0</span></small></span></label>
       <label class="ex-opt"><input type="radio" name="ex-scope" value="all"><span><b>Toutes les tâches</b><small>Y compris les terminées · <span id="ex-n-all">0</span></small></span></label>
     </fieldset>
-    <p class="hint ex-note">Fichier JSON avec, pour chaque tâche, son jour, son état, son tag et ses dates (création, début, attente, fin).</p>
+    <p class="hint ex-note">Fichier JSON avec, pour chaque tâche, son jour, son état, son tag, sa note et ses dates (création, début, attente, fin).</p>
     <p class="tm-hint" id="ex-msg" role="status" hidden></p>
     <div class="ed-actions ed-actions-end">
       <button class="primary" type="submit" id="ex-go">Exporter</button>
@@ -745,6 +754,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         <dt>À faire en retard</dt><dd>reportées sur aujourd’hui</dd>
         <dt>Jours passés</dt><dd>tâches terminées uniquement</dd>
         <dt>Relance</dt><dd>crée une tâche à faire</dd>
+        <dt>Tâche récurrente</dt><dd>la suivante apparaît une fois celle-ci terminée</dd>
         <dt>Tags anciens</dt><dd>plus utilisés aujourd’hui ni après</dd>
       </dl>
     </section>
@@ -853,7 +863,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const wk = defaultWeek(); let n = 0;
     const tasks = plan.flatMap((day, i) => day.map(([title, projectId, state]) =>
       fakeDates({ id:uid(), title, projectId, state, date:iso(addDays(wk, i)), created:++n })));
-    return { projects, tasks:[...tasks, ...nextWeekSample(wk)], sample:true, sampleNext:true };
+    return { projects, tasks:[...tasks, ...nextWeekSample(wk)], series:[], sample:true, sampleNext:true };
   }
 
   /* A light next week for the examples: a few planned to-dos, nothing started yet */
@@ -888,6 +898,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     try {
       const d = JSON.parse(localStorage.getItem(KEY));
       if (d && Array.isArray(d.tasks) && Array.isArray(d.projects)) {
+        if (!Array.isArray(d.series)) d.series = []; // saved before recurring tasks existed
         if (d.sample) d.tasks.forEach(fakeDates); // examples saved before dates existed
         const noStart = d.tasks.filter(t => t.state === 'doing' && !t.doingAt); // start unknown: the day counter starts now (saved, so it grows)
         if (noStart.length) { noStart.forEach(t => { t.doingAt = Date.now(); }); try { localStorage.setItem(KEY, JSON.stringify(d)); } catch {} }
@@ -902,7 +913,8 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     return seed();
   }
   const save = () => {
-    const used = new Set(db.tasks.map(t => t.projectId));
+    db.series.forEach(s => { const l = latestOcc(s); if (l) s.tpl = { title:l.title, projectId:l.projectId, note:l.note || '' }; }); // template = latest occurrence
+    const used = new Set([...db.tasks.map(t => t.projectId), ...db.series.map(s => s.tpl.projectId)]);
     db.projects = db.projects.filter(p => p.saved || used.has(p.id)); // tags added from the list are kept even without tasks
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch {}
   };
@@ -1001,7 +1013,95 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     if (TODAY_ONLY[s]) t.date = anchorDay();
     if (s === 'waiting' && !(from === 'done' && t.prev === 'waiting' && t.waitingSince)) t.waitingSince = todayIso();
     t.state = s;
+    if (from === 'done' && t.seriesId) dropSuccessor(t);
   }
+
+  /* ---------- recurring tasks: a rule (db.series) with one open occurrence at a time ----------
+     Each occurrence is an ordinary task carrying seriesId + occ (its planned date in the rhythm; it stays put when the task is moved).
+     Once no occurrence is left open (finished or deleted), the next one is created on the first date of the rhythm
+     after the latest one and not in the past; it copies the title, tag and note of the latest occurrence. */
+  const REPEAT = {
+    w1:{ every:1, unit:'week', label:'Toutes les semaines' },
+    w2:{ every:2, unit:'week', label:'Toutes les 2 semaines' },
+    w3:{ every:3, unit:'week', label:'Toutes les 3 semaines' },
+    w4:{ every:4, unit:'week', label:'Toutes les 4 semaines' },
+    m1:{ every:1, unit:'month', label:'Tous les mois' },
+    f1:{ every:1, unit:'first', label:'Tous les mois, premier jour' }, // offered only on that day
+    l1:{ every:1, unit:'last', label:'Tous les mois, dernier jour' },  // idem
+    m3:{ every:3, unit:'month', label:'Tous les 3 mois' }
+  };
+  const serie = id => db.series.find(s => s.id === id) || null;
+  const repeatKey = s => s ? s.unit[0] + s.every : '';
+  const seriesTasks = s => db.tasks.filter(t => t.seriesId === s.id);
+  const latestOcc = s => seriesTasks(s).reduce((m, t) => !m || t.occ > m.occ ? t : m, null);
+  // first / last weekday of a month (month index may overflow: Date handles it)
+  const firstWd = (y, m) => { let d = new Date(y, m, 1); while (isWeekend(d)) d = addDays(d, 1); return iso(d); };
+  const lastWd = (y, m) => { let d = new Date(y, m + 1, 0); while (isWeekend(d)) d = addDays(d, -1); return iso(d); };
+  // k-th date of the rhythm; monthly keeps the day of the month (the 31st becomes the last day of shorter months)
+  function occAt(s, k) {
+    const d = parse(s.start);
+    if (s.unit === 'week') return iso(addDays(d, 7 * s.every * k));
+    if (s.unit === 'first') return firstWd(d.getFullYear(), d.getMonth() + s.every * k);
+    if (s.unit === 'last') return lastWd(d.getFullYear(), d.getMonth() + s.every * k);
+    const m = new Date(d.getFullYear(), d.getMonth() + s.every * k, 1);
+    return iso(new Date(m.getFullYear(), m.getMonth(), Math.min(d.getDate(), new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate())));
+  }
+  // day an occurrence is placed on: a weekend date moves back to the Friday before
+  // (unless that Friday is already past, i.e. the occurrence falls this weekend: then the coming Monday)
+  function occDay(o) {
+    const d = parse(o), wd = d.getDay(), f = wd === 6 ? iso(addDays(d, -1)) : wd === 0 ? iso(addDays(d, -2)) : o;
+    return f < anchorDay() ? anchorDay() : f;
+  }
+  function nextOcc(s, after) {
+    const today = todayIso();
+    for (let k = 1; k < 10000; k++) { const o = occAt(s, k); if (o > after && o >= today) return o; }
+    return null;
+  }
+  // creates the next occurrence of every rule left without an open one; true when something was added
+  function syncSeries() {
+    let added = false;
+    db.series.forEach(s => {
+      if (seriesTasks(s).some(t => t.state !== 'done')) return;
+      const occ = nextOcc(s, s.last); if (!occ) return;
+      const src = latestOcc(s) || s.tpl;
+      const t = { id:uid(), title:src.title, projectId:proj(src.projectId) ? src.projectId : null, state:'todo', date:occDay(occ), created:Date.now(), createdAt:Date.now(), seriesId:s.id, occ };
+      if (src.note) t.note = src.note;
+      db.tasks.push(t); s.last = occ; added = true;
+    });
+    return added;
+  }
+  // an occurrence reopened (or restored after a delete): the next one created meanwhile goes away if still "à faire"
+  function dropSuccessor(t) {
+    const s = serie(t.seriesId); if (!s) return;
+    db.tasks = db.tasks.filter(x => !(x.seriesId === s.id && x !== t && x.occ > t.occ && x.state === 'todo'));
+    s.last = seriesTasks(s).reduce((m, x) => x.occ > m ? x.occ : m, t.occ);
+  }
+  // "Répéter" of a task: '' stops its rule (its occurrences become ordinary tasks), otherwise creates or changes it from this occurrence
+  function setRepeat(t, key) {
+    const s = serie(t.seriesId), r = REPEAT[key];
+    if (!r) {
+      if (s) { seriesTasks(s).forEach(x => { delete x.seriesId; delete x.occ; }); db.series = db.series.filter(x => x !== s); }
+      return;
+    }
+    if (s) {
+      Object.assign(s, { every:r.every, unit:r.unit, start:t.occ });
+      const nx = seriesTasks(s).find(x => x.occ > t.occ && x.state === 'todo'); // already created on the old rhythm: moved to the new one
+      if (nx) { nx.occ = nextOcc(s, t.occ) || nx.occ; nx.date = occDay(nx.occ); s.last = nx.occ; }
+      return;
+    }
+    const start = t.state === 'done' ? t.date : shownDate(t);
+    const ns = { id:uid(), every:r.every, unit:r.unit, start, last:start, tpl:{ title:t.title, projectId:t.projectId, note:t.note || '' } };
+    db.series.push(ns); t.seriesId = ns.id; t.occ = start;
+  }
+  // choices of a "Répéter" list for a task on `day`: "premier / dernier jour hors week-end" only when the day is one,
+  // or when it is the rule already in place (`keep`); the current choice is kept when still offered
+  function fillRepeat(sel, day, current = sel.value, keep = current) {
+    const d = parse(day), edge = { f1:firstWd(d.getFullYear(), d.getMonth()) === day, l1:lastWd(d.getFullYear(), d.getMonth()) === day };
+    const keys = Object.keys(REPEAT).filter(k => !(k in edge) || edge[k] || k === keep);
+    sel.innerHTML = '<option value="">Ne pas répéter</option>' + keys.map(k => `<option value="${k}">${REPEAT[k].label}</option>`).join('');
+    sel.value = keys.includes(current) ? current : '';
+  }
+  const REP_ICON = '<svg class="rep-ic" width="11" height="11" viewBox="0 0 12 12" role="img" aria-label="Tâche récurrente"><title>Tâche récurrente</title><path d="M9.8 4.6A4 4 0 0 0 2.4 4M2.2 7.4a4 4 0 0 0 7.4.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M2 1.8v2.4h2.4M10 10.2V7.8H7.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   /* ---------- elements ---------- */
   const $ = s => document.querySelector(s);
@@ -1089,7 +1189,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     return `<li class="task hue${ui.flash === t.id ? ' new' : ''}" data-id="${t.id}" data-state="${t.state}" draggable="true" style="${hueStyle(p)}" title="Cliquer pour voir le détail · coche : ${checkTip.toLowerCase()} · clic droit ou appui long : plus d’options">
       <div class="body">
         <button class="check" type="button" data-act="toggle" title="${checkTip}" aria-label="${checkTip} : ${esc(t.title)}"><span class="st">${ICON[t.state]}</span></button>
-        <button class="open" type="button" data-act="detail" aria-haspopup="dialog" aria-label="${esc(t.title)} — ${STATES[t.state]}. Voir le détail."><span class="txt"><span class="t">${esc(t.title)}</span>${meta}</span></button>
+        <button class="open" type="button" data-act="detail" aria-haspopup="dialog" aria-label="${esc(t.title)} — ${STATES[t.state]}${t.seriesId ? ', récurrente' : ''}. Voir le détail."><span class="txt"><span class="t">${esc(t.title)}${t.seriesId ? REP_ICON : ''}</span>${meta}</span></button>
       </div>${quick}
     </li>`;
   }
@@ -1154,6 +1254,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   function setAddDate(d) {
     addDate = d < todayIso() ? anchorDay() : snapWeekday(d);
     $('#add-day-label').textContent = cap(fmtLong.format(parse(addDate)));
+    fillRepeat($('#add-repeat'), addDate, undefined, ''); // a new task has no rule to keep
   }
   function renderPicker() {
     const today = todayIso(), y = dpMonth.getFullYear(), m = dpMonth.getMonth();
@@ -1281,6 +1382,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   }
 
   function render() {
+    if (syncSeries()) save();
     renderHeader(); renderFilters(); renderGrid(); renderAddControls();
     if (ui.inlineDate) { openInline(ui.inlineFocus); ui.inlineFocus = false; }
     $('#sample-note').hidden = !db.sample;
@@ -1352,6 +1454,8 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   function openCreator(date) {
     $('#cr-heading').textContent = 'Nouvelle tâche';
     addTitle.value = '';
+    $('#add-note').value = '';
+    fillRepeat($('#add-repeat'), addDate || anchorDay(), '');
     addForm.querySelector('#add-st-todo').checked = true;
     addHint.hidden = true;
     setAddDate(date || defaultAddDate());
@@ -1380,7 +1484,9 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     if (!addDate || addDate < todayIso()) { setAddDate(anchorDay()); return; }
     const p = proj(addPP.get());
     const t = { id:uid(), title, projectId:p ? p.id : null, state:'todo', date:addDate, created:Date.now(), createdAt:Date.now() };
+    const note = $('#add-note').value.trim(); if (note) t.note = note;
     applyState(t, addStateVal()); // "En cours" lands on today whatever day was picked
+    setRepeat(t, $('#add-repeat').value);
     db.tasks.push(t); reveal(t); ui.flash = t.id; save(); creator.close(); render();
     const where = shownDate(t);
     weekDates().includes(where)
@@ -1567,7 +1673,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   }));
   $('#keep-sample').onclick = () => { db.sample = false; save(); render(); };
   $('#clear-sample').onclick = () => {
-    const before = db; db = { projects:[], tasks:[], sample:false }; ui.filter.clear(); save(); saveUi(); render();
+    const before = db; db = { projects:[], tasks:[], series:[], sample:false }; ui.filter.clear(); save(); saveUi(); render();
     toast('Exemples effacés', 'Annuler', () => { db = before; save(); render(); });
   };
 
@@ -1644,15 +1750,28 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     }
     $('#ed-info').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
     $('#ed-follow').hidden = t.state !== 'waiting'; // follow-ups only make sense for a waiting task
+    fillRepeat($('#ed-repeat'), shownDate(t), repeatKey(serie(t.seriesId)));
+    const msg = repeatInfo(t);
+    $('#ed-rep-hint').textContent = msg; $('#ed-rep-hint').hidden = !msg;
+  }
+  function repeatInfo(t) {
+    const s = serie(t.seriesId); if (!s) return '';
+    const nx = seriesTasks(s).find(x => x !== t && x.state !== 'done');
+    if (nx) return `Occurrence suivante : ${fmtLong.format(parse(nx.date))}`;
+    if (t.state === 'done') return '';
+    const o = nextOcc(s, s.last);
+    return o ? `La suivante (${fmtLong.format(parse(occDay(o)))}) sera créée une fois celle-ci terminée.` : '';
   }
   function openEditor(t) {
     editing = t;
     edTitle.value = t.title;
+    $('#ed-note').value = t.note || '';
     edForm.querySelectorAll('input[name="ed-state"]').forEach(r => { r.checked = r.value === t.state; }); 
     edPP.set(t.projectId);
     edDate.value = shownDate(t);
     edHint.hidden = true;
     syncDateField();
+    fillRepeat($('#ed-repeat'), shownDate(t), repeatKey(serie(t.seriesId)));
     renderInfo(t);
     editor.showModal(); // no auto-selection of the title
     $('#ed-close').focus();
@@ -1680,6 +1799,13 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const v = edTitle.value.trim();
     if (editing && v) { editing.title = v; commit(); }
   });
+  $('#ed-repeat').addEventListener('change', e => { if (editing) { setRepeat(editing, e.target.value); commit(); } });
+  $('#ed-note').addEventListener('input', e => {
+    if (!editing) return;
+    const v = e.target.value.trim();
+    if (v) editing.note = v; else delete editing.note;
+    save(); // the note is not shown on cards: no re-render needed
+  });
   edTitle.addEventListener('blur', () => { if (editing && !edTitle.value.trim()) edTitle.value = editing.title; });
   edForm.querySelectorAll('input[name="ed-state"]').forEach(r => r.addEventListener('change', () => {
     if (!editing) return;
@@ -1703,9 +1829,12 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const idx = db.tasks.indexOf(t), p = proj(t.projectId);
     if (idx < 0) return;
     db.tasks.splice(idx, 1); save(); render();
-    toast('Tâche supprimée', 'Annuler', () => {
+    const nx = t.seriesId && db.tasks.find(x => x.seriesId === t.seriesId && x.state !== 'done');
+    toast(nx ? `Tâche supprimée · suivante ${fmtLong.format(parse(nx.date))}` : 'Tâche supprimée', 'Annuler', () => {
       if (p && !proj(p.id)) db.projects.push(p);
-      db.tasks.splice(idx, 0, t); save(); render();
+      db.tasks.splice(idx, 0, t);
+      if (t.seriesId) dropSuccessor(t);
+      save(); render();
     });
   }
   // Clicking the backdrop (outside the detail) closes it; the form fills the dialog, so only backdrop clicks target the dialog itself
@@ -1770,6 +1899,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       const { kind, target } = tmPending, tgt = kind === 'merge' ? proj(target) : null;
       if (kind === 'merge' && !tgt) return;
       db.tasks.forEach(t => { if (t.projectId === p.id) t.projectId = tgt ? tgt.id : null; });
+      db.series.forEach(s => { if (s.tpl.projectId === p.id) s.tpl.projectId = tgt ? tgt.id : null; });
       if (ui.filter.has(p.id)) { ui.filter.clear(); if (tgt) ui.filter.add(tgt.id); } // a filter on the old tag follows it
       if (inlineTag === p.id) inlineTag = tgt ? tgt.id : null;
       if (tgt && p.saved) tgt.saved = true;
@@ -1880,17 +2010,20 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const tasks = [...exTasks(scope)].sort((a, b) => shownDate(a).localeCompare(shownDate(b)) || ORDER[a.state] - ORDER[b.state] || rankOf(a) - rankOf(b) || a.created - b.created);
     const used = new Set(tasks.map(t => t.projectId));
     return JSON.stringify({
-      app:'Ancrage', format:1, exportedAt:new Date().toISOString(),
+      app:'Ancrage', format:2, exportedAt:new Date().toISOString(),
       scope: scope === 'all' ? 'toutes' : 'a-venir',
       tags: db.projects.filter(p => scope === 'all' || used.has(p.id)).map(p => ({ id:p.id, name:p.name, hue:p.hue })),
       tasks: tasks.map(t => ({
         id:t.id, title:t.title, state:t.state, stateLabel:STATES[t.state],
-        date:shownDate(t), tagId:t.projectId || null, tag:proj(t.projectId)?.name || null,
+        date:shownDate(t), tagId:t.projectId || null, tag:proj(t.projectId)?.name || null, note:t.note || null,
+        seriesId:t.seriesId || null, occ:t.occ || null,
         createdAt:isoTime(t.createdAt || (t.created > 1e12 ? t.created : null)),
         doingSince: t.state === 'doing' ? isoTime(t.doingAt) : null,
         waitingSince: t.state === 'waiting' ? (t.waitingSince || t.date) : null,
         doneAt: t.state === 'done' ? isoTime(t.doneAt) : null
-      }))
+      })),
+      series: db.series.filter(s => scope === 'all' || tasks.some(t => t.seriesId === s.id))
+        .map(s => ({ id:s.id, every:s.every, unit:s.unit, start:s.start, last:s.last, title:s.tpl.title, tagId:s.tpl.projectId || null, note:s.tpl.note || null }))
     }, null, 2);
   }
   const EX_ERR = { declined:'Export annulé.', rate_limited:'Une demande d’enregistrement est déjà ouverte : répondez-y, puis réessayez.', too_large:'Le fichier est trop volumineux pour être enregistré ici.' };
@@ -1930,6 +2063,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   }
   const isDay = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(parse(s));
   const toMs = v => { if (v == null || v === '') return null; const n = typeof v === 'number' ? v : Date.parse(v); return Number.isFinite(n) ? n : null; };
+  const noteStr = v => typeof v === 'string' ? v.replace(/\r\n?/g, '\n').trim().slice(0, 2000) : ''; // keeps line breaks
   const str = (v, max) => typeof v === 'string' ? v.trim().replace(/\s+/g, ' ').slice(0, max) : '';
   function parseImport(text) {
     let j; try { j = JSON.parse(text); } catch { return { error:'Ce fichier n’est pas un JSON valide.' }; }
@@ -1940,12 +2074,18 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       const title = str(t?.title, 160); if (!title) return null;
       const state = STATES[t.state] ? t.state : 'todo';
       return { id:str(t.id, 60), title, state, date:isDay(t.date) ? snapWeekday(t.date) : anchorDay(),
-        tagId:str(t.tagId ?? t.projectId, 60), tag:str(t.tag, 40),
+        tagId:str(t.tagId ?? t.projectId, 60), tag:str(t.tag, 40), note:noteStr(t.note),
         createdAt:toMs(t.createdAt), doingAt:toMs(t.doingSince ?? t.doingAt), doneAt:toMs(t.doneAt),
-        waitingSince:isDay(t.waitingSince) ? t.waitingSince : null };
+        waitingSince:isDay(t.waitingSince) ? t.waitingSince : null,
+        seriesId:str(t.seriesId, 60), occ:isDay(t.occ) ? t.occ : null };
     }).filter(Boolean);
     if (!tasks.length) return { error:'Ce fichier ne contient aucune tâche avec un intitulé.' };
-    return { tags, tasks };
+    const series = (Array.isArray(j?.series) ? j.series : []).map(r => ({
+      id:str(r?.id, 60), every:Math.min(12, Math.max(1, parseInt(r?.every, 10) || 1)), unit:['month', 'first', 'last'].includes(r?.unit) ? r.unit : 'week',
+      start:isDay(r?.start) ? r.start : null, last:isDay(r?.last) ? r.last : null,
+      title:str(r?.title, 160), tagId:str(r?.tagId, 60), note:noteStr(r?.note)
+    })).filter(r => r.id && r.start && r.title);
+    return { tags, tasks, series };
   }
   function imPreview() {
     if (!imData) return;
@@ -1979,7 +2119,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   imForm.addEventListener('submit', e => {
     e.preventDefault(); if (!imData) return;
     const before = JSON.parse(JSON.stringify(db)), replace = imMode() === 'replace';
-    if (replace) { db.tasks = []; db.projects = []; db.sample = false; ui.filter.clear(); }
+    if (replace) { db.tasks = []; db.projects = []; db.series = []; db.sample = false; ui.filter.clear(); }
     // tags: same id, else same name, else a new tag (its colour kept unless an active tag already has it)
     const tagMap = new Map();
     const tagFor = (id, name) => {
@@ -1995,11 +2135,19 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       if (id) tagMap.set(id, p.id);
       return p.id;
     };
+    // rules: an unknown one is added (a rule already here is kept as it is)
+    (imData.series || []).forEach(r => {
+      if (serie(r.id)) return;
+      db.series.push({ id:r.id, every:r.every, unit:r.unit, start:r.start, last:r.last || r.start, tpl:{ title:r.title, projectId:tagFor(r.tagId, null), note:r.note } });
+    });
     const ids = new Set(db.tasks.map(t => t.id)); let added = 0, skipped = 0;
     imData.tasks.forEach(t => {
       if (t.id && ids.has(t.id)) { skipped++; return; }
       const id = t.id || uid(); ids.add(id);
       const x = { id, title:t.title, projectId:tagFor(t.tagId, t.tag), state:t.state, date:t.date, created:Date.now() + added, createdAt:t.createdAt || Date.now() };
+      if (t.note) x.note = t.note;
+      const sr = t.seriesId && t.occ && serie(t.seriesId);
+      if (sr) { x.seriesId = sr.id; x.occ = t.occ; if (t.occ > sr.last) sr.last = t.occ; }
       if (t.state === 'doing') x.doingAt = t.doingAt || Date.now();
       if (t.state === 'waiting') x.waitingSince = t.waitingSince || t.date;
       if (t.state === 'done' && t.doneAt) x.doneAt = t.doneAt;
