@@ -23,7 +23,7 @@ Les tâches sont enregistrées dans le stockage local du navigateur. Pour les sa
 - Vues Adaptatif (autour d'aujourd'hui) et Semaine (lundi–vendredi)
 - États : à faire, en cours, en attente, terminé ; compteurs de jours
 - Deadline sur une tâche (n'importe quelle date), pastille rouge en cas de retard
-- Mode focus sur aujourd'hui, barre de progression
+- Mode focus sur aujourd'hui, barre de progression, carte « Journée bouclée » quand tout est terminé
 - Relances depuis une tâche en attente
 - Tags : filtres, couleurs, anciens tags, gestion (renommer, fusionner, supprimer)
 - Glisser-déposer, raccourcis clavier, mode sombre
