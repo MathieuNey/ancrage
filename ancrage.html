@@ -1,0 +1,2081 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ancrage</title>
+<script>/* theme before first paint: light unless dark was chosen (the system setting is not followed) */
+try { document.documentElement.dataset.theme = localStorage.getItem('semainier.v1.theme') === 'dark' ? 'dark' : 'light'; } catch { document.documentElement.dataset.theme = 'light'; }</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ECEFF3; --surface:#FFFFFF; --surface-2:#F4F6F9; --line:#DCE1E8; --line-2:#C5CCD7;
+  --ink:#151A24; --ink-2:#465063; --muted:#7A8394;
+  --tint-l:.955; --tint-c:.032; --edge-l:.84; --edge-c:.065;
+  --solid-l:.50; --solid-c:.15; --solid-ink:#FFFFFF;
+  --tag-l:.45; --tag-c:.13; --hatch-l:.925; --hatch-c:.035;
+  --shadow:0 1px 2px rgb(20 26 36 / .06), 0 10px 30px -14px rgb(20 26 36 / .22);
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0E1116; --surface:#161A21; --surface-2:#1C212A; --line:#262C36; --line-2:#363E4B;
+    --ink:#E6E9EF; --ink-2:#B0B7C4; --muted:#7C8494;
+    --tint-l:.27; --tint-c:.035; --edge-l:.39; --edge-c:.06;
+    --solid-l:.74; --solid-c:.13; --solid-ink:#0E1116;
+    --tag-l:.80; --tag-c:.10; --hatch-l:.235; --hatch-c:.03;
+    --shadow:0 1px 2px rgb(0 0 0 / .4), 0 12px 30px -14px rgb(0 0 0 / .7);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E1116; --surface:#161A21; --surface-2:#1C212A; --line:#262C36; --line-2:#363E4B;
+  --ink:#E6E9EF; --ink-2:#B0B7C4; --muted:#7C8494;
+  --tint-l:.27; --tint-c:.035; --edge-l:.39; --edge-c:.06;
+  --solid-l:.74; --solid-c:.13; --solid-ink:#0E1116;
+  --tag-l:.80; --tag-c:.10; --hatch-l:.235; --hatch-c:.03;
+  --shadow:0 1px 2px rgb(0 0 0 / .4), 0 12px 30px -14px rgb(0 0 0 / .7);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scrollbar-gutter:stable} /* the page growing or shrinking never shifts the layout sideways */
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+.app{max-width:1640px;margin:0 auto;padding-inline:20px;padding-block:0 32px}
+
+/* Header */
+.top{display:flex;align-items:center;justify-content:flex-start;gap:12px 8px;flex-wrap:wrap;padding-block:20px 16px}
+.top .views{margin-left:8px} /* a little more air between the week navigation and the view / help / ⋯ group */
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{flex:none}
+.logo{font-family:var(--f-display);font-weight:700;font-size:26px;letter-spacing:-.02em;line-height:1}
+.week{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
+.week-label{display:flex;align-items:center;justify-content:flex-end;padding-inline:6px} /* first in a right-aligned row: it grows leftwards, so no button moves */
+.wk-range{font-family:var(--f-display);font-weight:500;font-size:19px;letter-spacing:-.01em;display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.wk-num{font-family:var(--f-mono);font-size:11px;font-weight:500;color:var(--ink-2);border:1px solid var(--line-2);border-radius:5px;padding:1px 5px;letter-spacing:.02em;min-width:9ch;text-align:center}
+.views{display:inline-flex;padding:3px;gap:2px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.views button{height:30px;padding:0 12px;border:0;border-radius:7px;background:none;color:var(--ink-2);font-weight:500;cursor:pointer}
+.views button:hover{background:var(--surface-2)}
+.views button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:600}
+.icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
+.icon-btn:hover{border-color:var(--line-2);background:var(--surface-2)}
+.ghost{height:36px;padding:0 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500}
+.ghost:hover:not(:disabled){border-color:var(--line-2);background:var(--surface-2)}
+.ghost:disabled{opacity:.45;cursor:default}
+
+/* Quick add */
+.dp{position:relative;min-width:0}
+.dp-btn{height:38px;width:100%;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:0 12px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden}
+.dp-btn svg{flex:none;color:var(--ink-2)}
+.dp-btn span{overflow:hidden;text-overflow:ellipsis}
+.dp-btn:hover,.dp-btn[aria-expanded="true"]{border-color:var(--ink);background:var(--surface)}
+.dp-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:15;width:272px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px}
+.dp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.dp-title{font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:-.01em}
+.dp-nav{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:16px;line-height:1}
+.dp-nav:hover:not(:disabled){background:var(--surface-2);border-color:var(--line-2)}
+.dp-nav:disabled{opacity:.35;cursor:default}
+.dp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+.dp-dow{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:center;padding-bottom:4px}
+.dp-day{position:relative;height:36px;border:1px solid transparent;border-radius:8px;background:none;cursor:pointer;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.dp-day:hover:not(:disabled){background:var(--surface-2);border-color:var(--line-2)}
+.dp-day.out{color:var(--muted)}
+.dp-day:disabled{color:var(--line-2);cursor:default;text-decoration:line-through;text-decoration-color:var(--line)}
+.dp-day.today{border-color:var(--ink);font-weight:600}
+.dp-day.sel,.dp-day.sel:hover{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.dp-day.busy::after{content:"";position:absolute;left:50%;bottom:4px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:currentColor;opacity:.5}
+.pp{position:relative;min-width:0}
+.pp-btn .sw{flex:none;width:10px;height:10px;border-radius:50%;background:var(--solid)}
+.pp-btn.empty .sw{background:none;border:1.5px dashed var(--line-2)}
+.pp-btn.empty .pp-label{color:var(--muted)}
+.pp-label{overflow:hidden;text-overflow:ellipsis}
+dialog{overflow:visible}
+.pp-btn .chev{flex:none;margin-left:auto;color:var(--muted)}
+.pp-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:15;width:max(100%,240px);max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:5px}
+.pp-list{display:flex;flex-direction:column;max-height:280px;overflow-y:auto}
+.pp-pop hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.pp-opt,.pp-add{display:flex;align-items:center;gap:9px;min-height:34px;padding:0 10px;border:0;background:none;border-radius:6px;text-align:left;cursor:pointer;font-size:13.5px;color:var(--ink);width:100%}
+.pp-opt .sw{flex:none;width:10px;height:10px;border-radius:50%;background:var(--solid)}
+.pp-opt[data-id=""] .sw{background:none;border:1.5px dashed var(--line-2)}
+.pp-opt[aria-selected="true"]{font-weight:600;background:var(--tint)}
+.pp-opt:hover,.pp-opt:focus-visible,.pp-add:hover,.pp-add:focus-visible{background:var(--surface-2);outline:none}
+.pp-opt:focus-visible,.pp-add:focus-visible{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.pp-add{color:var(--ink-2);font-weight:600}
+/* "Anciens tags · N": folds the tags no longer used today or later */
+.pp-old{display:flex;align-items:center;gap:6px;min-height:30px;margin-top:4px;padding:0 10px;border:0;border-top:1px solid var(--line);border-radius:0;background:none;text-align:left;cursor:pointer;font-size:11.5px;font-weight:600;letter-spacing:.02em;color:var(--muted);width:100%}
+.pp-old:hover,.pp-old:focus-visible{color:var(--ink);background:var(--surface-2);outline:none}
+.pp-old:focus-visible{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.pp-old svg{flex:none;transition:transform .15s}
+.pp-old[aria-expanded="false"] svg{transform:rotate(-90deg)}
+.pp-new{display:flex;gap:6px;padding:3px}
+.pp-pop .pp-new input{flex:1;min-width:0;width:auto;height:34px;border:1px solid var(--ink);border-radius:7px;background:var(--surface);padding:0 10px}
+.pp-pop .pp-new input:focus{outline:none}
+.pp-ok{height:34px;padding:0 12px;border:0;border-radius:7px;background:var(--ink);color:var(--surface);font-weight:600;cursor:pointer}
+.add{display:grid;grid-template-columns:minmax(0,1fr) 200px 200px 140px auto;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:var(--shadow)}
+.add input,.add select,.field input,.field select{height:38px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:0 12px;min-width:0;width:100%}
+.add input:focus,.add select:focus,.field input:focus{outline:none;border-color:var(--ink);background:var(--surface)}
+.add input::placeholder{color:var(--muted)}
+.primary{height:38px;padding:0 18px;border:0;border-radius:8px;background:var(--ink);color:var(--surface);font-weight:600;cursor:pointer;white-space:nowrap}
+.primary:hover{opacity:.9}
+.primary:disabled{background:var(--surface-2);color:var(--muted);cursor:default;opacity:1}
+.kbd{font-family:var(--f-mono);font-size:10.5px;border:1px solid currentColor;border-radius:4px;padding:0 4px;margin-left:8px;opacity:.55}
+
+/* Filters */
+.bar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-block:14px 12px}
+.bar #add-open{flex:none;margin-left:auto} /* always on the tags' row, at the right */
+.filters{flex:1;min-width:0;display:flex;gap:6px;flex-wrap:wrap} /* too many tags: they wrap inside their own block, whose top lines up with the button */
+.chip{height:30px;padding:0 11px 0 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;color:var(--ink-2)}
+.chip:hover{border-color:var(--line-2)}
+.chip .sw{width:9px;height:9px;border-radius:50%;background:var(--solid)}
+.chip .n{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:var(--solid-ink);font-weight:600}
+.chip[aria-pressed="true"] .sw{background:var(--solid-ink)}
+.chip[aria-pressed="true"] .n{color:var(--solid-ink);opacity:.8}
+.chip.all[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.chip.all[aria-pressed="true"] .n{color:var(--surface);opacity:.7}
+.side{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+/* "+N": the tags beyond the first ones, in a small list */
+.more{position:relative;display:inline-flex}
+.more-btn{font-family:var(--f-mono);font-size:12px;font-weight:600;padding:0 11px}
+.more-btn[aria-expanded="true"]{border-color:var(--ink);color:var(--ink)}
+.more-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:15;display:flex;flex-direction:column;gap:4px;min-width:210px;max-width:calc(100vw - 32px);max-height:320px;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px}
+.more-pop.to-left{left:auto;right:0}
+.more-pop .chip{width:100%;justify-content:flex-start;flex:none}
+.more-pop .chip .n{margin-left:auto}
+
+.note{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);background:var(--surface);border:1px dashed var(--line-2);border-radius:10px;padding:8px 12px} /* sits above the tags row, whose own top padding spaces it */
+.note b{color:var(--ink)}
+.note .ghost{height:28px;padding:0 10px;font-size:12.5px}
+
+/* Week grid */
+.grid{display:grid;grid-template-columns:var(--cols,repeat(5,minmax(0,1fr)));gap:10px}
+@media (min-width:901px){
+  /* when today is on screen, the other four days get denser to leave it room */
+  .grid{gap:8px}
+  .grid .day:not(.is-today) .dname{font-size:15.5px}
+  .grid .day:not(.is-today) .day-head{padding:10px 10px 6px}
+  .grid .day:not(.is-today) .dist{margin-inline:10px}
+  .grid .day:not(.is-today) .dcount{margin-inline:10px;font-size:11px}
+  .grid .day:not(.is-today) .list{padding-inline:6px;gap:4px}
+  .grid .day:not(.is-today) .body{--py:5px;--pr:6px;--pl:4px;--gap:5px}
+  .grid .day:not(.is-today) .t{font-size:12.5px}
+  .grid .day:not(.is-today) .task[data-state="doing"] .t{font-size:13px}
+  .grid .day:not(.is-today) .task[data-state="done"] .t{font-size:12px}
+  .grid .day:not(.is-today) .p{font-size:10.5px}
+}
+.day.is-today .dname{font-size:22px}
+.day.is-today .t{font-size:14px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;min-height:420px;transition:box-shadow .12s,border-color .12s}
+.day.is-today{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.day.drop{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);background:var(--surface-2)}
+.day-head{padding:12px 12px 8px;display:flex;align-items:baseline;gap:8px;min-height:48px}
+.day-head .ddate{margin-left:auto}
+.dname{font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:-.015em;line-height:1.1}
+.day.is-past .dname{color:var(--ink-2)}
+.day.is-past .hue{--cm:0 !important} /* past days in black & white: drop project chroma, overrides inline --cm */
+.ddate{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.day.is-today .ddate{background:var(--ink);color:var(--surface);border-radius:5px;padding:1px 6px}
+/* one segment per task: finished = filled, in progress = outlined, to do = grey */
+.dist{display:flex;gap:3px;height:8px;margin:0 12px 6px}
+.dist:empty{display:none}
+.dist i{display:block;flex:1;min-width:3px;border-radius:2px;transition:background-color .2s}
+.dist .done{background:var(--ink)}
+.dist .doing{border:1.5px solid var(--ink)}
+.dist .todo{background:var(--line)}
+.dcount{margin:0 12px 8px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.list{list-style:none;margin:0;padding:0 8px 8px;display:flex;flex-direction:column;gap:5px}
+.empty{padding:10px 6px;font-size:12.5px;color:var(--muted);font-style:italic}
+.day-add{flex:none;align-self:center;width:26px;height:26px;border-radius:50%;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);display:grid;place-items:center;cursor:pointer;padding:0}
+.day-add:hover,.day-add:focus-visible{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.day.is-today .day-add{width:30px;height:30px;background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.day.is-today .day-add:hover{opacity:.85}
+
+/* Project hue — every tinted element derives its colours from --h (hue) and --cm (chroma on/off) */
+.hue{
+  --tint:oklch(var(--tint-l) calc(var(--tint-c) * var(--cm)) var(--h));
+  --edge:oklch(var(--edge-l) calc(var(--edge-c) * var(--cm)) var(--h));
+  --solid:oklch(var(--solid-l) calc(var(--solid-c) * var(--cm)) var(--h));
+  --tag:oklch(var(--tag-l) calc(var(--tag-c) * var(--cm)) var(--h));
+  --hatch:oklch(var(--hatch-l) calc(var(--hatch-c) * var(--cm)) var(--h));
+}
+
+/* Task cards — importance: doing > todo > waiting > done */
+.task{border-radius:8px;border:1px solid var(--edge);background:var(--tint);color:var(--ink);position:relative;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.task:hover{border-color:var(--tag)}
+.task.dragging{opacity:.35}
+.task.menu-open{outline:2px solid var(--ink);outline-offset:1px}
+.task.new{animation:pop .5s ease-out}
+@keyframes pop{from{transform:scale(.95);box-shadow:0 0 0 4px var(--edge)}}
+/* Card = wide check zone (left edge up to the title) + the rest, which opens the detail. Paddings are variables so both hit areas can bleed to the card edges */
+.body{--py:6px;--pr:8px;--pl:6px;--gap:7px;display:flex;align-items:stretch;width:100%;padding:var(--py) var(--pr) var(--py) var(--pl);border-radius:inherit;color:inherit}
+.check,.open{background:none;border:0;color:inherit;cursor:pointer;text-align:left;font:inherit;border-radius:inherit}
+.check{flex:none;display:flex;align-items:flex-start;margin:calc(-1 * var(--py)) 0 calc(-1 * var(--py)) calc(-1 * var(--pl));padding:var(--py) var(--gap) var(--py) var(--pl)}
+.open{flex:1;min-width:0;display:flex;margin:calc(-1 * var(--py)) calc(-1 * var(--pr)) calc(-1 * var(--py)) 0;padding:var(--py) var(--pr) var(--py) 0}
+.check:focus-visible,.open:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+/* keyboard focus on a task (↑ / ↓): the whole card is outlined, not just its check zone */
+.task:has(> .body > .check:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.check:focus-visible{outline:none}
+.st{flex:none;width:20px;height:20px;display:grid;place-items:center;color:var(--tag);position:relative}
+.st::after{content:"";position:absolute;inset:1px;background:currentColor;opacity:0;transition:opacity .12s;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6.4 10.3l2.4 2.4 4.8-5' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6.4 10.3l2.4 2.4 4.8-5' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat}
+@media (hover:hover){
+  .task:not([data-state="done"]) .check:hover .st::after{opacity:.75}
+  .task:not([data-state="done"]) .check:hover .st .pulse,
+  .task:not([data-state="done"]) .check:hover .st rect{visibility:hidden;animation:none} /* opacity alone loses to the pulse animation */
+  /* done: hovering previews the uncheck — the filled check turns back into an empty ring */
+  .task[data-state="done"] .check:hover .st{opacity:1}
+  .task[data-state="done"] .check:hover .st circle{fill:none;stroke:currentColor;stroke-width:1.7;r:7px}
+  .task[data-state="done"] .check:hover .st path{opacity:0}
+  .task[data-state="done"] .check:hover + .open .t{text-decoration-color:transparent;color:var(--ink-2)}
+}
+/* Hover actions: ▶ passer en cours (to-do / waiting) , ↩ (curved arrow) remettre à faire (in progress / waiting) and ⏸ mettre en attente (to-do / in progress) */
+/* Option B: quiet icons, no fill, in the card's own colour; a soft wash marks the one under the pointer.
+   The group takes the card's background (with a short fade) so the title never shows through. */
+.qa{--qa-bg:var(--tint);position:absolute;top:50%;right:4px;transform:translateY(-50%);display:flex;gap:2px;padding-left:4px;border-radius:6px;
+  background:var(--qa-bg);box-shadow:-10px 0 8px -2px var(--qa-bg);opacity:0;transition:opacity .12s;pointer-events:none}
+.task[data-state="waiting"] .qa{--qa-bg:var(--surface)}
+.task[data-state="doing"] .qa{--qa-bg:var(--solid)}
+.task:hover .qa,.task:focus-within .qa{opacity:1;pointer-events:auto}
+.quick{width:24px;height:24px;border-radius:6px;border:0;padding:0;display:grid;place-items:center;cursor:pointer;background:transparent;color:var(--tag);transition:background .12s}
+.quick svg{width:13px;height:13px}
+.task[data-state="doing"] .quick{color:var(--solid-ink)}
+.quick:hover{background:color-mix(in oklab,currentColor 16%,transparent)}
+.quick:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.quick.del{color:var(--muted)}
+.task[data-state="doing"] .quick.del{color:var(--solid-ink)}
+.quick.del:hover{color:oklch(.55 .19 25);background:color-mix(in oklab,oklch(.55 .19 25) 14%,transparent)}
+.task[data-state="done"] .qa{--qa-bg:var(--surface)}
+/* touch: the action buttons are always shown, so every card keeps room for them (selectors outrank the per-state and compact-column paddings) */
+@media (hover:none){
+  .qa{opacity:1;pointer-events:auto}
+  .grid .list .task[data-state] .body{--pr:84px}
+  .grid .list .task[data-state="waiting"] .body{--pr:58px}
+  .grid .list .task[data-state="done"] .body{--pr:32px}
+}
+.txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;padding-top:1px}
+.t{font-size:13.5px;line-height:1.3;font-weight:500;overflow-wrap:anywhere;align-self:flex-start} /* hugs the text, so "on the text" is precise */
+@media (hover:hover) and (pointer:fine){ .task:not([data-state="done"]) .open .t{cursor:text} }
+.open.editing{cursor:default}
+.task.is-editing .qa{display:none}
+.t-edit{display:block;width:100%;align-self:stretch;margin:0;padding:0 2px;border:0;border-radius:3px;background:var(--surface);color:var(--ink);font:inherit;font-weight:inherit;resize:none;overflow:hidden;
+  outline:2px solid var(--ink);outline-offset:1px;box-shadow:none}
+.task[data-state="doing"] .t-edit{background:var(--surface);color:var(--ink)}
+.p{font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--tag);line-height:1.3}
+
+/* "En cours" = the loudest thing on the page: solid fill, larger type */
+.task[data-state="doing"]{background:var(--solid);border-color:var(--solid);color:var(--solid-ink)}
+.task[data-state="doing"] + .task:not([data-state="doing"]){margin-top:8px}
+.task[data-state="doing"] .body{--py:13px;--pr:12px;--pl:9px;--gap:9px}
+.task[data-state="doing"] .st{color:var(--solid-ink);transform:scale(1.15);margin-top:1px}
+.task[data-state="doing"] .t{font-weight:700;font-size:16px;line-height:1.25;letter-spacing:-.005em}
+.day.is-today .task[data-state="doing"] .t{font-size:17px}.task[data-state="doing"] .p{color:var(--solid-ink);opacity:.9;text-transform:uppercase;letter-spacing:.08em;font-size:11px;margin-top:3px}
+
+/* En attente: one discreet line — dashed outline, no fill, days waiting on the right */
+.task[data-state="waiting"]{border-style:dashed;background:transparent;color:var(--ink-2)}
+.task[data-state="waiting"] .body{--py:3px}
+.task[data-state="waiting"] .txt{flex-direction:row;align-items:center;gap:8px}
+.task[data-state="waiting"] .t{font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;min-width:0}
+.wdays{margin-left:auto;flex:none;font-family:var(--f-mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.wdays.stale{color:oklch(.52 .15 45);font-weight:600}
+.task[data-state="waiting"] .t{font-weight:400}
+.since{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:2px;white-space:nowrap}
+.task[data-state="doing"] .since{text-transform:none;letter-spacing:0;background:transparent;color:inherit;border-color:currentColor;font-weight:600}
+.since.stale{color:oklch(.52 .15 45);border-color:currentColor;font-weight:600}
+.since-t{font-weight:500;opacity:.8}
+.since-t.stale{font-weight:800;opacity:1} /* 5 days or more */
+
+.task[data-state="done"]{background:transparent;border-color:transparent;color:var(--muted)}
+.task[data-state="done"] .body{--py:3px}
+/* Inline quick add (bottom of today / future columns) */
+.inline-add{margin-top:2px}
+/* Same box as a task card: shares .body's padding variables (so it follows the compact columns too), 1px border, 8px radius */
+.ia-open,.ia-form{border:1px solid transparent;border-radius:8px;gap:var(--gap);align-items:flex-start}
+.ia-open{background:none;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;text-align:left}
+.ia-open .st,.ia-form .st{color:var(--muted)}
+.ia-lbl{padding-top:1px;line-height:1.3}
+.ia-open:hover,.ia-open:focus-visible{border-color:var(--line-2);border-style:dashed;color:var(--ink);background:var(--surface-2);outline:none}
+.ia-form{border-color:var(--ink);background:var(--surface);align-items:center}
+.ia-input{flex:1;min-width:0;height:20px;border:0;background:none;padding:0;font-size:13.5px;line-height:1.3;font-weight:500;color:var(--ink)}
+.grid .day:not(.is-today) .ia-input{font-size:12.5px}
+.ia-input:focus{outline:none}
+.ia-input::placeholder{color:var(--muted);font-weight:400}
+.ia-pp{flex:none}
+.ia-pp .pp-pop{left:auto;right:0} /* opens inward, the tag button sits at the right edge */
+/* tag = a single dot: dashed when empty, filled with the tag colour otherwise; the name shows on hover */
+.ia-tag{width:22px;height:22px;margin-block:-1px;padding:0;justify-content:center;border:0;border-radius:50%;background:none}
+.ia-tag:hover,.ia-tag[aria-expanded="true"]{background:var(--surface-2)}
+.ia-tag .pp-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ia-tag .sw{width:13px;height:13px}
+.done-sep{display:flex;align-items:center;gap:8px;margin:8px 4px 0;font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--muted)}
+.done-sep::after{content:"";flex:1;border-top:1px solid var(--line)}
+.done-sep.is-empty{display:none}
+/* the group label folds / unfolds its tasks */
+.grp-toggle{display:inline-flex;align-items:center;gap:4px;margin:-3px -5px;padding:3px 5px;border:0;border-radius:5px;background:none;color:inherit;font:inherit;letter-spacing:inherit;cursor:pointer}
+.grp-toggle:hover{color:var(--ink);background:var(--surface-2)}
+.grp-toggle svg{flex:none;transition:transform .15s}
+.grp-toggle[aria-expanded="false"] svg{transform:rotate(-90deg)}
+/* Focus mode: a veil darkens the page, only today's column (and the Focus button) stay above it */
+/* Focus toggle in today's header, next to (+): same round shape, outlined; filled while on */
+.focus-toggle{flex:none;align-self:center;width:30px;height:30px;display:grid;place-items:center;padding:0;border:1px solid var(--line-2);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer}
+.focus-toggle:hover{border-color:var(--ink)}
+.focus-toggle[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.focus-toggle[aria-pressed="true"]:hover{opacity:.88}.focus-veil{position:fixed;inset:0;z-index:5;background:rgb(6 8 12 / .82);animation:veil .2s ease-out}
+@keyframes veil{from{opacity:0}}
+.day.focus-day{position:relative;z-index:6;box-shadow:0 0 0 1px var(--ink),0 20px 50px -12px rgb(0 0 0 / .45)}
+@media (prefers-reduced-motion: reduce){.focus-veil{animation:none}}
+/* sorting: a line shows where the dragged task will land */
+.task.ins-before::before,.task.ins-after::after{content:"";position:absolute;left:2px;right:2px;height:2px;border-radius:2px;background:var(--ink);pointer-events:none}
+.task.ins-before::before{top:-4px}
+.task.ins-after::after{bottom:-4px}
+.day.is-today .task[data-state="done"]{opacity:.6}
+.day.is-today .task[data-state="done"]:hover{opacity:1}
+.task[data-state="done"]:hover{background:var(--surface-2);border-color:var(--line)}
+.task[data-state="done"] .st{opacity:.55}
+.task[data-state="done"] .t{font-weight:400;font-size:13px;text-decoration:line-through;text-decoration-color:var(--line-2)}
+
+.pulse{transform-box:fill-box;transform-origin:center;animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35;transform:scale(.65)}}
+@media (prefers-reduced-motion: reduce){.pulse,.task.new{animation:none}}
+
+/* Context menu */
+.menu{position:fixed;z-index:20;width:230px;max-width:calc(100vw - 16px);background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:5px;display:flex;flex-direction:column}
+.menu .mh{padding:6px 10px 6px;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu button{display:flex;align-items:center;gap:9px;min-height:34px;padding:0 10px;border:0;background:none;border-radius:6px;text-align:left;cursor:pointer;font-size:13.5px;color:var(--ink)}
+.menu button:hover,.menu button:focus-visible{background:var(--surface-2);outline:none}
+.menu button:focus-visible{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.menu .mi-ic{color:var(--tag);display:grid;flex:none}
+.menu [aria-checked="true"]{font-weight:600}
+.menu .cur{margin-left:auto;font-size:11px;font-weight:500;color:var(--muted)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.menu .mi-primary{background:var(--ink);color:var(--surface);font-weight:600;min-height:38px}
+.menu .mi-primary .mi-ic{color:var(--surface)}
+.menu .mi-primary .mi-ic path{stroke:var(--ink)!important} /* the check mark sits on a light disc here */
+.menu .mi-primary:hover,.menu .mi-primary:focus-visible{background:var(--ink);opacity:.88}
+.menu .mi-danger{color:oklch(.55 .19 25)}
+
+/* Editor dialog */
+dialog{border:1px solid var(--line);border-radius:14px;padding:0;width:min(460px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgb(10 14 20 / .45)}
+.ed{display:grid;gap:16px;padding:20px}
+.ed h2{margin:0;font-family:var(--f-display);font-size:20px;font-weight:700;letter-spacing:-.015em}
+.field{display:grid;gap:6px}
+.field > span,.states legend{font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:.02em}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.states{border:0;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.states legend{padding:0;margin-bottom:6px}
+.states label{position:relative}
+.states input{position:absolute;opacity:0;pointer-events:none}
+.states span{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1px solid var(--line);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;color:var(--ink-2);text-align:center}
+.states input:checked + span{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.states input:focus-visible + span{outline:2px solid var(--ink);outline-offset:2px}
+.info{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;padding:0;background:none;font-size:12.5px}
+.info dt{color:var(--muted);font-weight:600}
+.info dd{margin:0;color:var(--ink)}
+.info .rel{font-family:var(--f-mono);font-size:11px;color:var(--ink-2);margin-left:6px;white-space:nowrap}
+.info .big{font-family:var(--f-mono);font-weight:600;font-size:12.5px;margin:0 6px 0 0}
+.info .big.stale{color:oklch(.52 .15 45)}
+.hint{font-size:12px;color:var(--muted);margin:-8px 0 0}
+.ed-actions{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.ed-actions-end{justify-content:flex-end}
+.states.states-3{grid-template-columns:repeat(3,1fr)}
+.ed-actions .spacer{flex:1}
+.field input:disabled{background:var(--line);border-color:var(--line);color:var(--muted);cursor:not-allowed;opacity:.75}
+.field:has(input:disabled) > span{color:var(--muted)}
+.ed-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:-4px}
+.ed-head .icon-btn{width:32px;height:32px;border:0;background:none;color:var(--ink-2)}
+.ed-head .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+.ed-head .icon-btn:focus:not(:focus-visible){outline:none}.danger{height:38px;padding:0 12px;border:1px solid transparent;border-radius:8px;background:none;color:oklch(.55 .19 25);font-weight:600;cursor:pointer}
+.danger:hover{border-color:currentColor}
+/* "⋯" menu (header) and export dialog */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.more-menu-btn[aria-expanded="true"]{border-color:var(--ink);background:var(--surface-2)}
+.app-menu .mi-svg{flex:none;color:var(--ink-2)}
+.app-menu .mi-check{margin-left:auto;display:grid;visibility:hidden}
+.app-menu [aria-checked="true"] .mi-check{visibility:visible}
+/* dark mode toggle: round button at the bottom right (desktop; on a phone it lives in the ⋯ menu only) */
+.theme-fab{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:9;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow)}
+.theme-fab:hover{border-color:var(--line-2);background:var(--surface-2)}
+.theme-fab .ic-sun,:root[data-theme="dark"] .theme-fab .ic-moon{display:none}
+:root[data-theme="dark"] .theme-fab .ic-sun{display:block}
+.ex-opts{border:0;margin:0;padding:0;display:grid;gap:8px}
+.ex-opt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.ex-opt:hover{border-color:var(--line-2)}
+.ex-opt:has(input:checked){border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.ex-opt input{margin:3px 0 0;accent-color:var(--ink)}
+.ex-opt b{display:block;font-weight:600}
+.ex-opt small{display:block;margin-top:2px;font-size:12px;color:var(--muted)}
+.ex-note{margin:-6px 0 0}
+/* help dialog: the footer's help, readable on every screen */
+.help-note{margin:-6px 0 0;font-size:12.5px;color:var(--muted)}
+.help-sec h3{margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--ink-2)}
+.help-list{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:13px}
+.help-list dt{color:var(--ink);font-weight:500;white-space:nowrap}
+.help-list dd{margin:0;color:var(--ink-2)}
+.help-list .kbd{margin:0 3px 0 0;opacity:.8}
+.help-ic{display:block}
+/* Aide: its own button next to ⋯ on desktop; on a phone it stays inside the ⋯ menu */
+.app-menu .mi-help{display:none}
+@media (max-width:599.98px){ .help-btn{display:none} .app-menu .mi-help{display:flex} }
+.inl-ic{display:inline-block;vertical-align:-1px}
+.im-drop{display:flex;align-items:center;gap:12px;padding:16px;border:1.5px dashed var(--line-2);border-radius:10px;cursor:pointer;color:var(--ink-2)}
+.im-drop:hover,.im-drop.over{border-color:var(--ink);background:var(--surface-2);color:var(--ink)}
+.im-drop:focus-within{outline:2px solid var(--ink);outline-offset:2px}
+.im-drop svg{flex:none}
+.im-drop span{min-width:0}
+.im-drop b{display:block;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.im-drop small{display:block;margin-top:2px;font-size:12px;color:var(--muted)}
+.tm-hint.is-error{color:oklch(.5 .17 25);background:color-mix(in oklab,oklch(.55 .19 25) 10%,var(--surface))}
+.ex-opts:disabled{opacity:.5}
+.ex-opts:disabled .ex-opt{cursor:default}
+/* Tag manager */
+.pp-manage{font-weight:500}
+.tm-intro{margin:-6px 0 0}
+.tm-hint{margin:0;font-size:12.5px;color:var(--ink);background:var(--surface-2);border-radius:8px;padding:7px 10px}
+.tm-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:min(60vh,480px);overflow-y:auto}
+.tm-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:6px;border:1px solid var(--line);border-radius:10px}
+.tm-row.is-old .tm-name{font-weight:500;color:var(--ink-2)}
+.tm-sw{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);display:grid;place-items:center;cursor:pointer;padding:0}
+.tm-sw .sw{width:14px;height:14px;border-radius:50%;background:var(--solid)}
+.tm-sw:hover,.tm-sw[aria-expanded="true"]{border-color:var(--ink)}
+.tm-main{min-width:0;display:grid}
+.tm-name{height:28px;min-width:0;width:100%;border:1px solid transparent;border-radius:7px;background:none;padding:0 7px;font-weight:600}
+.tm-name:hover{border-color:var(--line)}
+.tm-name:focus{outline:none;border-color:var(--ink);background:var(--surface)}
+.tm-meta{font-size:11.5px;color:var(--muted);padding-left:8px}
+.tm-merge{height:30px;max-width:118px;border:1px solid var(--line);border-radius:7px;background:var(--surface-2);padding:0 6px;font-size:12.5px;color:var(--ink-2);cursor:pointer}
+.tm-merge:focus{outline:none;border-color:var(--ink)}
+.tm-del{width:30px;height:30px;border:0;border-radius:7px;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer;padding:0}
+.tm-del:hover{color:oklch(.55 .19 25);background:color-mix(in oklab,oklch(.55 .19 25) 12%,transparent)}
+.tm-pal,.tm-confirm{grid-column:1 / -1}
+.tm-pal{display:flex;flex-wrap:wrap;gap:8px;padding:4px 4px 2px}
+.tm-hue{position:relative;width:28px;height:28px;border-radius:50%;border:0;padding:0;background:var(--solid);cursor:pointer}
+.tm-hue[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.tm-hue.taken::after{content:"";position:absolute;inset:10px;border-radius:50%;background:var(--surface);opacity:.9} /* already used by another active tag */
+.tm-confirm{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 4px 2px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-2)}
+.tm-confirm span{flex:1;min-width:180px}
+.tm-confirm .ghost,.tm-confirm .danger,.tm-confirm .primary{height:30px;padding:0 12px;font-size:12.5px}
+.tm-confirm .danger{border-color:currentColor}
+.follow-btn{display:inline-flex;align-items:center;gap:7px;height:38px;font-weight:600}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--surface);border-radius:10px;padding:10px 12px 10px 16px;display:flex;align-items:center;gap:14px;font-size:13.5px;box-shadow:var(--shadow);z-index:10;max-width:calc(100vw - 32px)}
+.toast button{border:0;background:none;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:2px 4px}
+
+.foot{margin-top:18px;font-size:12px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+.foot .kbd{margin:0 3px 0 0;opacity:.8}
+.foot{padding-right:56px} /* room for the round dark-mode button fixed at the bottom right */
+.signature{font-style:italic;white-space:nowrap}
+
+@media (max-width:1100px){
+  .add{grid-template-columns:1fr 1fr 1fr auto}
+  .add #add-title{grid-column:1 / -1}
+}
+@media (max-width:900px){
+  .grid{grid-template-columns:minmax(0,1fr)} /* minmax: a long card never widens the column past the screen */
+  .day{min-height:0}
+}
+@media (max-width:560px){
+  .app{padding-inline:16px}
+  .add{grid-template-columns:1fr 1fr}
+  .add .primary{grid-column:1 / -1}
+  .week-label{min-width:0}
+  .row2{grid-template-columns:1fr}
+  .states{grid-template-columns:repeat(2,1fr)}
+}
+.today-ic{display:none}
+.note-short{display:none}
+.add-plus{margin-right:.3em}
+/* Phone: header on 2 rows (logo + view · ‹ dates › + today icon), tags in one sideways-scrolling row, floating add button */
+@media (max-width:599.98px){
+  .top{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px 8px;padding-block:14px 10px}
+  .more-menu-btn{grid-column:3;grid-row:1;width:34px;height:34px}
+  .brand{grid-column:1;grid-row:1}
+  .brand svg{width:24px;height:24px}
+  .logo{font-size:22px}
+  .top .views{grid-column:2;grid-row:1;padding:2px;margin-left:0}
+  .views button{height:28px;padding:0 9px;font-size:13px}
+  .week{grid-column:1 / -1;grid-row:2;margin-left:0;flex-wrap:nowrap;gap:6px;min-width:0}
+  .week #prev{order:0}
+  .week .week-label{order:1;padding-inline:2px;min-width:0}
+  .week #next{order:2}
+  .week #today{order:3;margin-left:auto}
+  .week .icon-btn,.week #today{width:34px;height:34px;padding:0;display:grid;place-items:center}
+  .today-ic{display:block}
+  .today-txt{display:none}
+  .wk-range{font-size:15.5px;gap:6px}
+  .wk-num{min-width:0}
+  .bar{padding-block:4px 10px}
+  .filters{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding-inline:16px;scrollbar-width:none;overscroll-behavior-x:contain}
+  .filters::-webkit-scrollbar{display:none}
+  .filters .chip{flex:none}
+  .bar #add-open{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9;width:56px;height:56px;padding:0;border-radius:50%;display:grid;place-items:center;box-shadow:var(--shadow);font-size:28px;font-weight:500;line-height:1}
+  .add-plus{margin:0}
+  .add-txt,#add-open .kbd{display:none}
+  .app{padding-bottom:88px} /* the floating button never hides the last task */
+  .theme-fab{display:none}
+  .foot{padding-right:0}
+  /* sample banner on one line: "Tâches d'exemple." + Effacer · Garder */
+  .note{flex-wrap:nowrap;gap:8px;padding:6px 6px 6px 12px}
+  .note-msg{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .note-long{display:none}
+  .note-short{display:inline}
+  .note .ghost{flex:none;height:28px;padding:0 10px}
+}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><!-- anchor -->
+        <g fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="14" cy="5.5" r="2.8"/>
+          <path d="M14 8.3V25"/>
+          <path d="M8.5 12.5h11"/>
+          <path d="M4 16.5c.8 5.2 5 8.5 10 8.5s9.2-3.3 10-8.5"/>
+          <path d="M4 16.5l-1.6 2.6M4 16.5l3 .4M24 16.5l1.6 2.6M24 16.5l-3 .4"/>
+        </g>
+      </svg>
+      <span class="logo">Ancrage</span>
+    </div>
+    <nav class="week" aria-label="Navigation">
+      <div class="week-label">
+        <span class="wk-range"><span id="wk-range">—</span><span class="wk-num" id="wk-num">S00</span></span>
+      </div>
+      <button class="ghost" id="today" type="button" title="Revenir à aujourd’hui (T)" aria-label="Aujourd’hui">
+        <svg class="today-ic" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="10.2" r="1.6" fill="currentColor"/></svg><span class="today-txt">Aujourd’hui</span>
+      </button>
+      <button class="icon-btn" id="prev" type="button" aria-label="Semaine précédente" title="Semaine précédente (←)">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="icon-btn" id="next" type="button" aria-label="Semaine suivante" title="Semaine suivante (→)">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </nav>
+    <div class="views" role="group" aria-label="Vue">
+      <button type="button" data-view="rolling" aria-pressed="true" title="Autour d’aujourd’hui, selon la taille de l’écran">Adaptatif</button>
+      <button type="button" data-view="week" aria-pressed="false" title="Du lundi au vendredi, semaine par semaine">Semaine</button>
+    </div>
+    <button class="icon-btn help-btn" id="help-btn" type="button" aria-label="Aide" title="Aide">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6.2 6.3a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.6" r=".9" fill="currentColor"/></svg>
+    </button>
+    <button class="icon-btn more-menu-btn" id="app-menu-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="app-menu" aria-label="Plus d’actions" title="Plus d’actions">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><circle cx="12.5" cy="8" r="1.4" fill="currentColor"/></svg>
+    </button>
+  </header>
+
+
+  <div class="note" id="sample-note" hidden>
+    <span class="note-msg"><b>Tâches d’exemple.</b><span class="note-long"> Ces tâches servent à montrer l’outil.</span></span>
+    <button class="ghost" type="button" id="clear-sample">Effacer<span class="note-long"> les exemples</span></button>
+    <button class="ghost" type="button" id="keep-sample"><span class="note-long">Les garder</span><span class="note-short">Garder</span></button>
+  </div>
+
+  <div class="bar">
+    <div class="filters" id="filters" role="group" aria-label="Filtrer par tag"></div>
+    <button class="primary" id="add-open" type="button" title="Nouvelle tâche (A)" aria-label="Ajouter une tâche"><span class="add-plus" aria-hidden="true">+</span><span class="add-txt">Ajouter</span><span class="kbd">A</span></button>
+  </div>
+
+  <main class="grid" id="grid" aria-live="polite"></main>
+  <div class="focus-veil" id="focus-veil" title="Quitter le mode focus" hidden></div>
+
+  <footer class="foot">
+    <span>Enregistré dans ce navigateur.</span>
+    <span class="signature">Claudé par Mathieu Ney</span>
+  </footer>
+</div>
+
+<div class="menu hue" id="menu" role="menu" hidden></div>
+
+<dialog id="creator" aria-labelledby="cr-heading">
+  <form class="ed" id="add" autocomplete="off">
+    <div class="ed-head">
+      <h2 id="cr-heading">Nouvelle tâche</h2>
+      <button class="icon-btn" type="button" id="cr-close" aria-label="Fermer" title="Fermer (Échap)">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <label class="field"><span>Intitulé</span><input id="add-title" type="text" maxlength="160" placeholder="Préparer la démo du module congés"></label>
+    <div class="row2">
+      <div class="field"><span>Jour</span>
+        <div class="dp">
+          <button type="button" id="add-day" class="dp-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="dp-pop">
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span id="add-day-label">—</span>
+          </button>
+          <div class="dp-pop" id="dp-pop" role="dialog" aria-label="Choisir un jour" hidden></div>
+        </div>
+      </div>
+      <div class="field"><span id="add-tag-lbl">Tag</span>
+        <div class="pp" id="add-pp">
+          <button type="button" id="add-project" class="dp-btn pp-btn hue" aria-haspopup="listbox" aria-expanded="false" aria-controls="pp-pop" aria-labelledby="add-tag-lbl add-project">
+            <span class="sw"></span><span class="pp-label">Aucun tag</span>
+            <svg class="chev" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="pp-pop" id="pp-pop" role="listbox" aria-label="Choisir un tag" hidden></div>
+        </div>
+      </div>
+    </div>
+    <fieldset class="states states-3">
+      <legend>État</legend>
+      <label><input type="radio" name="add-state" id="add-st-todo" value="todo" checked><span data-icon="todo">À faire</span></label>
+      <label><input type="radio" name="add-state" id="add-st-doing" value="doing"><span data-icon="doing">En cours</span></label>
+      <label><input type="radio" name="add-state" id="add-st-waiting" value="waiting"><span data-icon="waiting">En attente</span></label>
+    </fieldset>
+    <p class="hint" id="add-hint" hidden>Une tâche en cours ou en attente est placée sur aujourd’hui.</p>
+    <div class="ed-actions ed-actions-end">
+      <button class="primary" type="submit">Ajouter la tâche</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="editor" aria-labelledby="ed-heading">
+  <form class="ed" id="ed-form">
+    <div class="ed-head">
+      <h2 id="ed-heading">Détail</h2>
+      <button class="icon-btn" type="button" id="ed-close" aria-label="Fermer" title="Fermer (Échap)">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <label class="field"><span>Intitulé</span><input id="ed-title" type="text" maxlength="160" required></label>
+    <div class="row2">
+      <label class="field"><span>Jour</span><input id="ed-date" type="date" required></label>
+      <div class="field"><span id="ed-project-lbl">Tag</span>
+        <div class="pp" id="ed-pp">
+          <button type="button" id="ed-project" class="dp-btn pp-btn hue" aria-haspopup="listbox" aria-expanded="false" aria-controls="ed-pp-pop" aria-labelledby="ed-project-lbl ed-project">
+            <span class="sw"></span><span class="pp-label">Aucun tag</span>
+            <svg class="chev" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="pp-pop" id="ed-pp-pop" role="listbox" aria-label="Choisir un tag" hidden></div>
+        </div>
+      </div>
+    </div>
+    <p class="hint" id="ed-hint" hidden>Le week-end n’est pas affiché : la tâche passera au lundi suivant.</p>
+    <fieldset class="states">
+      <legend>État</legend>
+      <label><input type="radio" name="ed-state" id="ed-st-todo" value="todo"><span data-icon="todo">À faire</span></label>
+      <label><input type="radio" name="ed-state" id="ed-st-doing" value="doing"><span data-icon="doing">En cours</span></label>
+      <label><input type="radio" name="ed-state" id="ed-st-waiting" value="waiting"><span data-icon="waiting">En attente</span></label>
+      <label><input type="radio" name="ed-state" id="ed-st-done" value="done"><span data-icon="done">Terminé</span></label>
+    </fieldset>
+    <dl class="info" id="ed-info" aria-label="Historique"></dl>
+    <div class="ed-actions">
+      <button class="danger" type="button" id="ed-delete">Supprimer</button>
+      <button class="ghost follow-btn" type="button" id="ed-follow" hidden>
+        <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2.5v9M2.5 7h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Créer une relance
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<div class="menu app-menu" id="app-menu" role="menu" aria-label="Plus d’actions" hidden>
+  <button type="button" role="menuitem" data-act="export" hidden>
+    <svg class="mi-svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v7M5 6.8l3 3 3-3M3 11v1.5c0 .6.4 1 1 1h8c.6 0 1-.4 1-1V11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Exporter les tâches…</button>
+  <button type="button" role="menuitem" data-act="import">
+    <svg class="mi-svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 10V3M5 5.7l3-3 3 3M3 11v1.5c0 .6.4 1 1 1h8c.6 0 1-.4 1-1V11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Importer des tâches…</button>
+  <button type="button" role="menuitem" data-act="tags">
+    <svg class="mi-svg" width="16" height="16" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 4h10M2 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="5" cy="4" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="10" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/></svg>Gérer les tags</button>
+  <button type="button" role="menuitem" data-act="help" class="mi-help">
+    <svg class="mi-svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6.2 6.3a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.6" r=".9" fill="currentColor"/></svg>Aide</button>
+  <hr>
+  <button type="button" role="menuitemcheckbox" data-act="theme" aria-checked="false">
+    <svg class="mi-svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 9.6A5.5 5.5 0 0 1 6.4 2.8a5.5 5.5 0 1 0 6.8 6.8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>Mode sombre<span class="mi-check" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7.2l2.6 2.6L11 4.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+</div>
+
+<dialog id="exporter" aria-labelledby="ex-heading">
+  <form class="ed" id="ex-form">
+    <div class="ed-head">
+      <h2 id="ex-heading">Exporter les tâches</h2>
+      <button class="icon-btn" type="button" id="ex-close" aria-label="Fermer" title="Fermer (Échap)">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <fieldset class="ex-opts">
+      <legend class="sr-only">Tâches à exporter</legend>
+      <label class="ex-opt"><input type="radio" name="ex-scope" value="upcoming" checked><span><b>Tâches à venir</b><small>À faire, en cours et en attente · <span id="ex-n-upcoming">0</span></small></span></label>
+      <label class="ex-opt"><input type="radio" name="ex-scope" value="all"><span><b>Toutes les tâches</b><small>Y compris les terminées · <span id="ex-n-all">0</span></small></span></label>
+    </fieldset>
+    <p class="hint ex-note">Fichier JSON avec, pour chaque tâche, son jour, son état, son tag et ses dates (création, début, attente, fin).</p>
+    <p class="tm-hint" id="ex-msg" role="status" hidden></p>
+    <div class="ed-actions ed-actions-end">
+      <button class="primary" type="submit" id="ex-go">Exporter</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="help" aria-labelledby="help-heading">
+  <div class="ed">
+    <div class="ed-head">
+      <h2 id="help-heading">Aide</h2>
+      <button class="icon-btn" type="button" id="help-close" aria-label="Fermer" title="Fermer (Échap)">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p class="help-note">Enregistré dans ce navigateur.</p>
+    <section class="help-sec">
+      <h3>Souris et tactile</h3>
+      <dl class="help-list">
+        <dt><svg class="help-ic" viewBox="0 0 20 20" width="18" height="18" role="img" aria-label="Coche"><circle cx="10" cy="10" r="7.8" fill="currentColor"/><path d="M6.4 10.3l2.4 2.4 4.8-5" fill="none" style="stroke:var(--surface)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></dt><dd>terminer</dd>
+        <dt>Clic sur la tâche</dt><dd>détail</dd>
+        <dt>▶</dt><dd>en cours</dd>
+        <dt><svg class="inl-ic" width="12" height="12" viewBox="0 0 12 12" role="img" aria-label="Flèche retour"><path d="M4.3 2.6L2 4.9l2.3 2.3M2.3 4.9h4.6a2.6 2.6 0 0 1 0 5.2H5.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></dt><dd>à faire</dd>
+        <dt>⏸</dt><dd>en attente</dd>
+        <dt>Clic droit ou appui long</dt><dd>plus d’options</dd>
+        <dt>Glisser une tâche</dt><dd>changer de jour</dd>
+      </dl>
+    </section>
+    <section class="help-sec">
+      <h3>Clavier</h3>
+      <dl class="help-list">
+        <dt><span class="kbd">A</span></dt><dd>nouvelle tâche</dd>
+        <dt><span class="kbd">←</span><span class="kbd">→</span></dt><dd>jours (colonnes depuis une tâche)</dd>
+        <dt><span class="kbd">↑</span><span class="kbd">↓</span></dt><dd>tâches du jour</dd>
+        <dt><span class="kbd">Entrée</span></dt><dd>cocher</dd>
+        <dt><span class="kbd">Espace</span></dt><dd>détail</dd>
+        <dt><span class="kbd">T</span></dt><dd>aujourd’hui</dd>
+        <dt><span class="kbd">F</span></dt><dd>focus</dd>
+      </dl>
+    </section>
+    <section class="help-sec">
+      <h3>Règles</h3>
+      <dl class="help-list">
+        <dt>En cours, en attente</dt><dd>toujours sur aujourd’hui</dd>
+        <dt>À faire en retard</dt><dd>reportées sur aujourd’hui</dd>
+        <dt>Jours passés</dt><dd>tâches terminées uniquement</dd>
+        <dt>Relance</dt><dd>crée une tâche à faire</dd>
+        <dt>Tags anciens</dt><dd>plus utilisés aujourd’hui ni après</dd>
+      </dl>
+    </section>
+  </div>
+</dialog>
+
+<dialog id="importer" aria-labelledby="im-heading">
+  <form class="ed" id="im-form">
+    <div class="ed-head">
+      <h2 id="im-heading">Importer des tâches</h2>
+      <button class="icon-btn" type="button" id="im-close" aria-label="Fermer" title="Fermer (Échap)">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <label class="im-drop" id="im-drop">
+      <input type="file" id="im-file" class="sr-only" accept=".json,application/json">
+      <svg width="22" height="22" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 10V3M5 5.7l3-3 3 3M3 11v1.5c0 .6.4 1 1 1h8c.6 0 1-.4 1-1V11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span><b id="im-file-label">Choisir un fichier JSON</b><small>ou le déposer ici · un fichier exporté depuis Ancrage</small></span>
+    </label>
+    <p class="tm-hint" id="im-msg" role="status" hidden></p>
+    <fieldset class="ex-opts" id="im-modes" disabled>
+      <legend class="sr-only">Mode d’import</legend>
+      <label class="ex-opt"><input type="radio" name="im-mode" value="add" checked><span><b>Ajouter à mes tâches</b><small id="im-add-note">Les tâches déjà présentes sont ignorées.</small></span></label>
+      <label class="ex-opt"><input type="radio" name="im-mode" value="replace"><span><b>Remplacer toutes mes tâches</b><small id="im-replace-note">Vos tâches et tags actuels sont supprimés.</small></span></label>
+    </fieldset>
+    <div class="ed-actions ed-actions-end">
+      <button class="primary" type="submit" id="im-go" disabled>Importer</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="tagmgr" aria-labelledby="tm-heading">
+  <div class="ed">
+    <div class="ed-head">
+      <h2 id="tm-heading">Gérer les tags</h2>
+      <button class="icon-btn" type="button" id="tm-close" aria-label="Fermer" title="Fermer (Échap)">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p class="hint tm-intro">Renommez un tag en cliquant sur son nom, changez sa couleur avec la pastille, fusionnez deux tags ou supprimez-en un.</p>
+    <p class="tm-hint" id="tm-hint" role="status" hidden></p>
+    <ul class="tm-list" id="tm-list"></ul>
+  </div>
+</dialog>
+
+<button class="theme-fab" id="theme-toggle" type="button" aria-pressed="false" aria-label="Mode sombre" title="Passer en mode sombre">
+  <svg class="ic-moon" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 9.6A5.5 5.5 0 0 1 6.4 2.8a5.5 5.5 0 1 0 6.8 6.8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+  <svg class="ic-sun" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+</button>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+  const KEY = 'semainier.v1'; // storage key kept from the app's former name, so saved tasks are not lost
+  const STATES = { doing:'En cours', todo:'À faire', waiting:'En attente', done:'Terminé' };
+  const ORDER = { doing:0, todo:1, waiting:2, done:3 };
+  const HUES = [255, 28, 155, 320, 75, 200, 0, 115, 285, 50];
+  const DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
+  const FILTER_MAX = 6; // tag chips shown in the filter row before "+N"
+  const RING = '<circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.7"/>';
+  const ICON = {
+    todo:   `<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">${RING}</svg>`,
+    doing:  `<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">${RING}<circle class="pulse" cx="10" cy="10" r="3.4" fill="currentColor"/></svg>`,
+    waiting:`<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-dasharray="2.6 2.4"/><rect x="7.3" y="7" width="1.9" height="6" rx=".7" fill="currentColor"/><rect x="10.8" y="7" width="1.9" height="6" rx=".7" fill="currentColor"/></svg>`,
+    done:   `<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="7.8" fill="currentColor"/><path d="M6.4 10.3l2.4 2.4 4.8-5" fill="none" style="stroke:var(--surface)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+  };
+
+  /* ---------- dates ---------- */
+  const pad = n => String(n).padStart(2, '0');
+  const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const monday = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); return addDays(x, -((x.getDay() + 6) % 7)); };
+  const isoWeek = d => {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const wd = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - wd);
+    return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7);
+  };
+  const fmtShort = new Intl.DateTimeFormat('fr-FR', { day:'numeric', month:'short' });
+  const fmtLong = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'short' });
+  const todayIso = () => iso(new Date());
+  const defaultWeek = () => { const t = new Date(), wd = t.getDay(); return monday(wd === 0 || wd === 6 ? addDays(t, 2) : t); };
+  const snapWeekday = s => { const d = parse(s), wd = d.getDay(); return wd === 6 ? iso(addDays(d, 2)) : wd === 0 ? iso(addDays(d, 1)) : s; };
+
+  /* ---------- data ---------- */
+  const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+  function seed() {
+    const projects = [
+      { id:'rh',   name:'Portail RH',   hue:255 },
+      { id:'mig',  name:'Migration SI', hue:28 },
+      { id:'av',   name:'Avant-vente',  hue:155 },
+      { id:'rec',  name:'Recrutement',  hue:320 },
+      { id:'int',  name:'Interne',      hue:75 },
+      { id:'form', name:'Formation',    hue:200 }
+    ];
+    const plan = [
+      [['Point hebdo équipe','int','done'],['Relire les spécifications du module congés','rh','done'],['Chiffrer le lot 2','av','done'],['Préparer le jeu de données de recette','mig','done'],['Relancer le client sur la validation des maquettes','rh','waiting'],['Mettre à jour le planning de l’équipe','int','done']],
+      [['Atelier de cadrage avec la DSI','mig','done'],['Corriger les anomalies de recette #412 et #415','rh','done'],['Rédiger la section technique de la réponse AO','av','done'],['Entretien candidat développeur front','rec','done'],['Obtenir les accès VPN à l’environnement client','mig','waiting'],['Revue de code — PR authentification SSO','rh','done'],['Lire le chapitre 2 du support Vue 3','form','todo']],
+      [['Démo de fin de sprint 14','rh','done'],['Écrire le script de migration des comptes','mig','done'],['Relecture du mémoire technique','av','done'],['Préparer la grille d’entretien','rec','done'],['Avis juridique sur la clause RGPD','av','waiting'],['Support du comité de pilotage','int','done'],['Mettre à jour la doc d’exploitation','mig','todo']],
+      [['Migrer les historiques 2019–2022','mig','done'],['Soutenance de l’offre chez le prospect','av','done'],['Estimer les user stories du sprint 15','rh','done'],['Débrief entretien avec le manager','rec','done'],['Commander les licences de l’outil ETL','mig','waiting'],['Session de formation Git avancé','form','done'],['Relancer le fournisseur ETL','mig','todo']],
+      [['Finaliser l’export des contrats vers le nouveau SI','mig','doing'],['Exécuter la recette de non-régression','rh','todo'],['Rédiger le compte rendu du COPIL','int','todo'],['Répondre au prospect sur l’hébergement','av','todo'],['Planifier les entretiens de la semaine prochaine','rec','todo'],['Préparer la démo du module congés','rh','todo'],['Retour client sur le chiffrage du lot 2','av','waiting'],['Validation du plan de bascule par la DSI','mig','waiting'],['Point hebdo équipe','int','done'],['Saisir les temps de la semaine','int','done']]
+    ];
+    const wk = defaultWeek(); let n = 0;
+    const tasks = plan.flatMap((day, i) => day.map(([title, projectId, state]) =>
+      fakeDates({ id:uid(), title, projectId, state, date:iso(addDays(wk, i)), created:++n })));
+    return { projects, tasks:[...tasks, ...nextWeekSample(wk)], sample:true, sampleNext:true };
+  }
+
+  /* A light next week for the examples: a few planned to-dos, nothing started yet */
+  function nextWeekSample(wk) {
+    const plan = [
+      [['Point hebdo équipe','int'],['Lancer la bascule en pré-production','mig'],['Envoyer l’offre finale au prospect','av']],
+      [['Recette du module congés avec les RH','rh'],['Entretien candidat data engineer','rec']],
+      [['Démo de fin de sprint 15','rh'],['Préparer le support de formation Vue 3','form']],
+      [['Bilan de la migration avec la DSI','mig']],
+      [['Rétrospective d’équipe','int'],['Saisir les temps de la semaine','int']]
+    ];
+    const next = addDays(wk, 7);
+    return plan.flatMap((day, i) => day.map(([title, projectId], j) =>
+      fakeDates({ id:uid(), title, projectId, state:'todo', date:iso(addDays(next, i)), created:100 + i * 10 + j })));
+  }
+
+  /* Plausible made-up timestamps for example tasks (stable per title) */
+  function fakeDates(t) {
+    let h = 0; for (const c of t.title) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    const at = (d, hr, m) => { const x = new Date(d); x.setHours(hr, m % 60, 0, 0); return x.getTime(); };
+    const day = parse(t.date);
+    const back = t.state === 'doing' ? 4 : h % 5 === 0 ? 0 : 1 + (h % 13); // created the same morning, or up to ~2 weeks before
+    t.createdAt ??= at(addDays(day, -back), back ? 9 + (h % 9) : 8, h >> 3);
+    if (t.createdAt > Date.now()) t.createdAt = Date.now() - (1 + (h % 70)) * 3600e3; // planned ahead: created in the last few days
+    if (t.state === 'waiting') t.waitingSince ??= t.date;
+    if (t.state === 'doing') t.doingAt ??= at(addDays(day, -2), 9, 5 + (h % 40)); // started a couple of days ago, to show "depuis X j"
+    if (t.state === 'done') t.doneAt ??= at(day, 10 + (h % 8), h >> 5);
+    return t;
+  }
+
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      if (d && Array.isArray(d.tasks) && Array.isArray(d.projects)) {
+        if (d.sample) d.tasks.forEach(fakeDates); // examples saved before dates existed
+        const noStart = d.tasks.filter(t => t.state === 'doing' && !t.doingAt); // start unknown: the day counter starts now (saved, so it grows)
+        if (noStart.length) { noStart.forEach(t => { t.doingAt = Date.now(); }); try { localStorage.setItem(KEY, JSON.stringify(d)); } catch {} }
+        if (d.sample && !d.sampleNext) {          // examples saved before next week had any
+          const first = d.tasks.map(t => t.date).sort()[0];
+          if (first) d.tasks.push(...nextWeekSample(monday(parse(first))));
+          d.sampleNext = true;
+        }
+        return d;
+      }
+    } catch {}
+    return seed();
+  }
+  const save = () => {
+    const used = new Set(db.tasks.map(t => t.projectId));
+    db.projects = db.projects.filter(p => p.saved || used.has(p.id)); // tags added from the list are kept even without tasks
+    try { localStorage.setItem(KEY, JSON.stringify(db)); } catch {}
+  };
+  const saveUi = () => { try { localStorage.setItem(KEY + '.ui', JSON.stringify({ filter:[...ui.filter], folded:ui.folded })); } catch {} };
+
+  let db = load();
+  const ui = { view:'rolling', roll:0, week:defaultWeek(), filter:new Set(), flash:null, folded:{ waiting:false, done:false } }; // "Adaptatif" is the default view on every load; groups start unfolded
+  try {
+    const u = JSON.parse(localStorage.getItem(KEY + '.ui'));
+    if (u) { ui.filter = new Set((u.filter || []).slice(0, 1)); ui.folded = { waiting:!!u.folded?.waiting, done:!!u.folded?.done }; }
+  } catch {}
+
+  const proj = id => db.projects.find(p => p.id === id) || null;
+  function projectFor(name) {
+    name = name.trim().replace(/\s+/g, ' ');
+    if (!name) return null;
+    let p = db.projects.find(p => p.name.toLowerCase() === name.toLowerCase());
+    if (!p) {
+      p = { id:uid(), name, hue:pickHue(db.projects.filter(isActiveTag).map(q => q.hue)) };
+      db.projects.push(p);
+    }
+    return p;
+  }
+  // Colour for a new tag: only active tags hold a colour, so old tags' colours are reused.
+  // First free palette colour (in palette order); when all 10 are taken, the hue farthest from every one in use.
+  const hueGap = (a, b) => { const d = Math.abs(a - b) % 360; return Math.min(d, 360 - d); };
+  const HUE_NEAR = 15; // closer than this, two tags read as the same colour
+  function pickHue(used) {
+    const free = HUES.find(h => used.every(u => hueGap(h, u) >= HUE_NEAR));
+    if (free != null) return free;
+    let best = 0, bestGap = -1;
+    for (let h = 0; h < 360; h += 5) {
+      const g = Math.min(...used.map(u => hueGap(h, u)));
+      if (g > bestGap) { best = h; bestGap = g; }
+    }
+    return best;
+  }
+  // Active tags that already share a colour (given before this rule existed): the later ones get a new colour, once, on load
+  function fixHueClashes() {
+    const kept = []; let changed = false;
+    db.projects.filter(isActiveTag).forEach(p => {
+      if (kept.some(h => hueGap(h, p.hue) < HUE_NEAR)) { p.hue = pickHue(kept); changed = true; }
+      kept.push(p.hue);
+    });
+    if (changed) save();
+  }
+  // Active tag = used by a task of today or later, or in progress / waiting; a tag with no task at all is new, so active too.
+  // Others are "old": listed apart in the tag picker. Computed on the fly, so reusing one makes it active again.
+  function isActiveTag(p) {
+    const mine = db.tasks.filter(t => t.projectId === p.id);
+    return !mine.length || mine.some(t => TODAY_ONLY[t.state] || shownDate(t) >= todayIso());
+  }
+  const hueStyle = p => p ? `--h:${p.hue};--cm:1` : '--h:250;--cm:0';
+  const fkey = t => t.projectId || 'none';
+  const passes = t => ui.filter.size === 0 || ui.filter.has(fkey(t));
+  const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
+  const stepWeekday = (d, dir) => { let x = addDays(d, dir); while (isWeekend(x)) x = addDays(x, dir); return x; };
+  const dayName = s => DAYS[(parse(s).getDay() + 6) % 7];
+  // Dates on screen: "Adaptatif" = a focus day (today shifted by ui.roll weekdays) with a span that depends on the screen:
+  //   < 900 px: focus + 3 ahead · ≥ 900 px: 1 back + focus + 3 ahead. "Semaine" is Mon–Fri of ui.week
+  const mqSmall = matchMedia("(max-width: 899.98px)");
+  const mqPhone = matchMedia("(max-width: 599.98px)"); // phone layout: tags in one scrolling row (no "+N"), floating add button
+  const span = () => mqSmall.matches ? { back:0, ahead:3 } : { back:1, ahead:3 };
+  const weekDates = () => {
+    if (ui.view === 'week') return DAYS.map((_, i) => iso(addDays(ui.week, i)));
+    let a = parse(anchorDay()); for (let i = 0; i < Math.abs(ui.roll); i++) a = stepWeekday(a, Math.sign(ui.roll));
+    const { back, ahead } = span(), out = [];
+    let b = a; for (let i = 0; i < back; i++) { b = stepWeekday(b, -1); out.unshift(iso(b)); }
+    out.push(iso(a));
+    let d = a; for (let i = 0; i < ahead; i++) { d = stepWeekday(d, 1); out.push(iso(d)); }
+    return out;
+  };
+
+  // "En cours" and "En attente" only ever live on today (next Monday on weekends); to-dos roll over from the past
+  const anchorDay = () => snapWeekday(todayIso());
+  const CARRIED = { todo:true };
+  const TODAY_ONLY = { doing:true, waiting:true };
+  const shownDate = t => TODAY_ONLY[t.state] ? anchorDay() : CARRIED[t.state] && t.date <= anchorDay() ? anchorDay() : t.date;
+  const waitDays = t => Math.max(0, Math.round((parse(todayIso()) - parse(t.waitingSince || t.date)) / 864e5));
+  const doingDays = t => t.doingAt ? Math.max(0, Math.round((parse(todayIso()) - parse(iso(new Date(t.doingAt)))) / 864e5)) : 0;
+  // Changing a task's day; for a finished one the completion date follows (same time of day)
+  function moveTo(t, d) {
+    t.date = d;
+    if (t.state === 'done' && t.doneAt) {
+      const at = new Date(t.doneAt), nd = parse(d); nd.setHours(at.getHours(), at.getMinutes(), 0, 0); t.doneAt = nd.getTime();
+    }
+  }
+  function applyState(t, s) {
+    if (t.state === s) return;
+    const from = t.state;
+    t.date = shownDate(t); // acting on a task happens where it is shown (today for carried ones), not back in the past
+    if (from === 'done') delete t.doneAt;                        // leaving "done" erases its completion date
+    delete t.rank;                                               // joins the end of its new group
+    if (s === 'done') { t.prev = from; t.doneAt = Date.now(); }
+    if (s === 'doing') t.doingAt = Date.now();
+    if (TODAY_ONLY[s]) t.date = anchorDay();
+    if (s === 'waiting' && !(from === 'done' && t.prev === 'waiting' && t.waitingSince)) t.waitingSince = todayIso();
+    t.state = s;
+  }
+
+  /* ---------- elements ---------- */
+  const $ = s => document.querySelector(s);
+  const grid = $('#grid'), filtersEl = $('#filters'), addForm = $('#add'), addTitle = $('#add-title'),
+        addProject = $('#add-project'), addDay = $('#add-day'),
+        editor = $('#editor'), edForm = $('#ed-form'), edTitle = $('#ed-title'),         edDate = $('#ed-date'), edHint = $('#ed-hint'), toastEl = $('#toast');
+
+  document.querySelectorAll('.states span[data-icon]').forEach(s => s.insertAdjacentHTML('afterbegin', ICON[s.dataset.icon]));
+
+  /* ---------- render ---------- */
+  function renderHeader() {
+    const dates = weekDates(), start = parse(dates[0]), end = parse(dates[dates.length - 1]);
+    const sameMonth = end.getMonth() === start.getMonth();
+    $('#wk-range').textContent = `${sameMonth ? start.getDate() : fmtShort.format(start)} – ${fmtShort.format(end)} ${end.getFullYear()}`;
+    const w1 = isoWeek(start), w2 = isoWeek(end);
+    $('#wk-num').textContent = w1 === w2 ? 'S' + pad(w1) : `S${pad(w1)}–${pad(w2)}`;
+    const rolling = ui.view === 'rolling';
+    const unit = rolling ? 'Jour' : 'Semaine';
+    $('#prev').setAttribute('aria-label', unit + ' précédent' + (rolling ? '' : 'e')); $('#prev').title = unit + ' précédent' + (rolling ? '' : 'e') + ' (←)';
+    $('#next').setAttribute('aria-label', unit + ' suivant' + (rolling ? '' : 'e')); $('#next').title = unit + ' suivant' + (rolling ? '' : 'e') + ' (→)';
+    const diff = Math.round((ui.week - defaultWeek()) / (7 * 864e5));
+    $('#today').disabled = rolling ? ui.roll === 0 : diff === 0;
+    document.querySelectorAll('.views button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === ui.view)));
+  }
+
+  function renderFilters() {
+    const dates = new Set(weekDates());
+    const inWeek = db.tasks.filter(t => dates.has(shownDate(t)));
+    const count = k => inWeek.filter(t => fkey(t) === k).length;
+    const keys = new Set([...db.projects.map(p => p.id), ...(db.tasks.some(t => !t.projectId) ? ['none'] : [])]);
+    ui.filter.forEach(k => { if (!keys.has(k)) ui.filter.delete(k); });
+    // Only tags with tasks in the columns on screen (the selected one stays even at 0), busiest first,
+    // at most FILTER_MAX chips; the rest go in a "+N" list. One tag at a time; clicking the selected tag again clears the filter.
+    const items = [...db.projects.map(p => ({ key:p.id, p, name:p.name })), ...(keys.has('none') ? [{ key:'none', p:null, name:'Sans tag' }] : [])]
+      .map(it => ({ ...it, n:count(it.key) }))
+      .filter(it => it.n > 0 || ui.filter.has(it.key))
+      .sort((a, b) => b.n - a.n || (a.key === 'none') - (b.key === 'none') || a.name.localeCompare(b.name, 'fr'));
+    const max = mqPhone.matches ? Infinity : FILTER_MAX; // on a phone the row scrolls sideways instead
+    let shown = items.slice(0, max), rest = items.slice(max);
+    const sel = rest.find(it => ui.filter.has(it.key));
+    if (sel) { rest = [shown.pop(), ...rest.filter(it => it !== sel)].sort((a, b) => items.indexOf(a) - items.indexOf(b)); shown.push(sel); }
+    if (!rest.length) ui.moreOpen = false;
+    const chip = it => `<button type="button" class="chip hue" style="${hueStyle(it.p)}" data-key="${it.key}" aria-pressed="${ui.filter.has(it.key)}"><span class="sw"></span>${esc(it.name)} <span class="n">${it.n}</span></button>`;
+    filtersEl.innerHTML = shown.map(chip).join('')
+      + (rest.length ? `<span class="more">
+          <button type="button" class="chip more-btn" data-act="more" aria-haspopup="true" aria-expanded="${!!ui.moreOpen}" title="Autres tags">+${rest.length}</button>
+          <div class="more-pop" role="group" aria-label="Autres tags"${ui.moreOpen ? '' : ' hidden'}>${rest.map(chip).join('')}</div>
+        </span>` : '');
+    const pop = filtersEl.querySelector('.more-pop');
+    if (pop && !pop.hidden && pop.getBoundingClientRect().right > innerWidth - 8) pop.classList.add('to-left'); // near the right edge: opens leftwards
+  }
+  function closeMore(refocus) {
+    if (!ui.moreOpen) return;
+    ui.moreOpen = false; renderFilters();
+    if (refocus) filtersEl.querySelector('.more-btn')?.focus();
+  }
+  document.addEventListener('pointerdown', e => { if (ui.moreOpen && !e.target.closest('.more')) closeMore(false); });
+  filtersEl.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.moreOpen) { e.preventDefault(); e.stopPropagation(); closeMore(true); } });
+
+  function card(t) {
+    const p = proj(t.projectId);
+    // The project name is not written on cards (its colour says it); it shows in the detail only
+    const dn = t.state === 'doing' ? doingDays(t) : 0;
+    // days in progress, folded into the label: "En cours · depuis 3 j" (nothing added on the first day; bolder from 5 days, like waiting tasks)
+    const meta = t.state === 'doing' ? `<span class="p">En cours${dn ? `<span class="since-t${dn >= 5 ? ' stale' : ''}" title="En cours depuis le ${fmtLong.format(new Date(t.doingAt))}"> · depuis ${dn === 1 ? 'hier' : dn + ' j'}</span>` : ''}</span>`
+      : t.state === 'waiting' ? (() => {
+          const n = waitDays(t);
+          const label = n === 0 ? 'auj.' : n + ' j';
+          return `<span class="wdays${n >= 5 ? ' stale' : ''}" title="En attente depuis le ${fmtLong.format(parse(t.waitingSince || t.date))}">${label}</span>`;
+        })()
+      : '';
+    const checkTip = t.state === 'done' ? 'Décocher la tâche' : 'Terminer la tâche';
+    // Hover actions: ▶ start (to-do / waiting) and ⏸ put on hold (to-do / in progress)
+    // (waiting tasks only offer "+ relance" and delete on hover; their other states are in the menu and the detail)
+    const follow = t.state === 'waiting'
+      ? `<button class="quick" type="button" data-act="follow" title="Créer une relance" aria-label="Créer une relance pour « ${esc(t.title)} »">${PLUS}</button>` : '';
+    const start = t.state === 'todo'
+      ? `<button class="quick" type="button" data-act="start" title="Passer en cours" aria-label="Passer « ${esc(t.title)} » en cours"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 2.2v7.6L9.8 6z" fill="currentColor"/></svg></button>` : '';
+    const hold = t.state === 'todo' || t.state === 'doing'
+      ? `<button class="quick hold" type="button" data-act="wait" title="Mettre en attente" aria-label="Mettre « ${esc(t.title)} » en attente"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="3" y="2.5" width="2.1" height="7" rx=".7" fill="currentColor"/><rect x="6.9" y="2.5" width="2.1" height="7" rx=".7" fill="currentColor"/></svg></button>` : '';
+    const back = t.state === 'doing'
+      ? `<button class="quick hold" type="button" data-act="back" title="Remettre à faire" aria-label="Remettre « ${esc(t.title)} » à faire"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.3 2.6L2 4.9l2.3 2.3M2.3 4.9h4.6a2.6 2.6 0 0 1 0 5.2H5.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : '';
+    const del = `<button class="quick del" type="button" data-act="del" title="Supprimer" aria-label="Supprimer « ${esc(t.title)} »"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>`;
+    const quick = `<span class="qa">${start}${back}${hold}${follow}${del}</span>`; // delete is offered on every task
+    return `<li class="task hue${ui.flash === t.id ? ' new' : ''}" data-id="${t.id}" data-state="${t.state}" draggable="true" style="${hueStyle(p)}" title="Cliquer pour voir le détail · coche : ${checkTip.toLowerCase()} · clic droit ou appui long : plus d’options">
+      <div class="body">
+        <button class="check" type="button" data-act="toggle" title="${checkTip}" aria-label="${checkTip} : ${esc(t.title)}"><span class="st">${ICON[t.state]}</span></button>
+        <button class="open" type="button" data-act="detail" aria-haspopup="dialog" aria-label="${esc(t.title)} — ${STATES[t.state]}. Voir le détail."><span class="txt"><span class="t">${esc(t.title)}</span>${meta}</span></button>
+      </div>${quick}
+    </li>`;
+  }
+
+  // Waiting tasks sit under "En attente · N", finished ones (today) under "Terminées · N".
+  // (empty dividers are rendered hidden). Each divider folds its group; the choice is shared by all columns and remembered.
+  const CHEV = '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 3.8L5 6.3l2.5-2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function listHtml(tasks, isToday) {
+    const by = s => tasks.filter(t => t.state === s);
+    const open = tasks.filter(t => t.state === 'doing' || t.state === 'todo'), waiting = by('waiting'), done = by('done');
+    const sep = (label, n, grp) => {
+      const exp = !ui.folded[grp];
+      return `<li class="done-sep${n ? '' : ' is-empty'}"><button type="button" class="grp-toggle" data-act="fold" data-grp="${grp}" aria-expanded="${exp}" title="${exp ? 'Replier' : 'Déplier'}">${CHEV}<span>${label} · ${n}</span></button></li>`;
+    };
+    const group = (list, grp) => ui.folded[grp] ? '' : list.map(card).join('');
+    if (!isToday) return open.map(card).join('')
+      + (waiting.length ? sep('En attente', waiting.length, 'waiting') + group(waiting, 'waiting') : '') + done.map(card).join('');
+    return (tasks.length ? open.map(card).join('') : '<li class="empty">Rien de prévu.</li>')
+      + inlineRow() // quick add right under the tasks still to do
+      + sep('En attente', waiting.length, 'waiting') + group(waiting, 'waiting')
+      + sep('Terminées', done.length, 'done') + group(done, 'done');
+  }
+
+  function renderGrid() {
+    const today = todayIso(), dates = weekDates();
+    grid.style.setProperty('--cols', dates.map(d => d === today ? 'minmax(0,2.4fr)' : 'minmax(0,1fr)').join(' ')); // today ≈ 37 % of the row
+    grid.classList.toggle('has-today', dates.includes(today));
+    grid.innerHTML = dates.map((date, i) => {
+      const all = db.tasks.filter(t => shownDate(t) === date && passes(t));
+      const shown = [...all].sort((a, b) => ORDER[a.state] - ORDER[b.state] || rankOf(a) - rankOf(b) || a.created - b.created);
+      const c = { doing:0, todo:0, waiting:0, done:0 };
+      all.forEach(t => c[t.state]++);
+      // progress (today only): one segment per task, finished first, then in progress, then to do; waiting tasks are left out
+      const segs = ['done', 'doing', 'todo'].flatMap(s => shown.filter(t => t.state === s));
+      const dist = segs.map(t => `<i class="${t.state}" title="${esc(t.title)} — ${STATES[t.state]}"></i>`).join('');
+      const n = (k, one, many) => `${c[k]} ${c[k] > 1 ? many : one}`;
+      const caption = !segs.length ? (all.length ? 'Rien à traiter' : 'Aucune tâche')
+        : !(c.doing + c.todo) ? `Tout est bouclé · ${n('done', 'terminée', 'terminées')}`
+        : [c.done && n('done', 'terminée', 'terminées'), c.doing && n('doing', 'en cours', 'en cours'), c.todo && n('todo', 'à faire', 'à faire')].filter(Boolean).join(' · ');
+      const cls = (date === today ? ' is-today' : date < today ? ' is-past' : '') + (ui.focus && date === anchorDay() ? ' focus-day' : '');
+      const dn = dayName(date);
+      return `<section class="day${cls}" data-date="${date}" aria-label="${dn} ${fmtShort.format(parse(date))}">
+        <header class="day-head"><span class="dname">${dn}</span><span class="ddate">${fmtShort.format(parse(date))}</span>${date === anchorDay() /* focus toggle: on today (next Monday on weekends) */
+          ? `<button type="button" class="focus-toggle" data-act="focus" aria-pressed="${!!ui.focus}" title="${ui.focus ? 'Quitter le mode focus' : 'Mode focus sur ce jour'} (F)" aria-label="Mode focus"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="currentColor"/></svg></button>` : ''}${date === today /* the header (+) is only on today; other days use the inline add */
+          ? `<button type="button" class="day-add" data-act="add" title="Ajouter une tâche à ${dn.toLowerCase()}" aria-label="Ajouter une tâche à ${dn.toLowerCase()}"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2.5v9M2.5 7h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>` : ''}</header>
+        ${date === today ? `<div class="dist" aria-hidden="true">${dist}</div>` : ""}
+        ${date === today ? `<div class="dcount">${caption}</div>` : ""}
+        <ul class="list">${date === today ? listHtml(shown, true) : (shown.length ? listHtml(shown, false) : '<li class="empty">Rien de prévu.</li>') + (date > today ? inlineRow() : '')}</ul>
+      </section>`;
+    }).join('');
+    ui.flash = null;
+  }
+
+  /* ---------- add-form day: monthly weekday picker ---------- */
+  let addDate = null;
+  const dpPop = $('#dp-pop');
+  let dpMonth = null;
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const fmtMonth = new Intl.DateTimeFormat('fr-FR', { month:'long', year:'numeric' });
+  // Default day: first open (today or later) weekday of the displayed week, else today
+  const defaultAddDate = () => weekDates().find(d => d >= todayIso()) || anchorDay();
+  function setAddDate(d) {
+    addDate = d < todayIso() ? anchorDay() : snapWeekday(d);
+    $('#add-day-label').textContent = cap(fmtLong.format(parse(addDate)));
+  }
+  function renderPicker() {
+    const today = todayIso(), y = dpMonth.getFullYear(), m = dpMonth.getMonth();
+    const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
+    const busy = new Set(db.tasks.map(shownDate));
+    const now = new Date(), canPrev = y * 12 + m > now.getFullYear() * 12 + now.getMonth();
+    let cells = '';
+    for (let wk = monday(first); wk <= last; wk = addDays(wk, 7)) {
+      for (let i = 0; i < 5; i++) {
+        const d = addDays(wk, i), s = iso(d), out = d.getMonth() !== m, past = s < today;
+        cells += `<button type="button" class="dp-day${out ? ' out' : ''}${s === today ? ' today' : ''}${s === addDate ? ' sel' : ''}${busy.has(s) ? ' busy' : ''}" data-date="${s}"${past ? ' disabled' : ''} aria-label="${cap(fmtLong.format(d))}"${s === addDate ? ' aria-pressed="true"' : ''}>${d.getDate()}</button>`;
+      }
+    }
+    dpPop.innerHTML = `<div class="dp-head">
+        <button type="button" class="dp-nav" data-nav="-1" aria-label="Mois précédent"${canPrev ? '' : ' disabled'}>‹</button>
+        <span class="dp-title">${cap(fmtMonth.format(first))}</span>
+        <button type="button" class="dp-nav" data-nav="1" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="dp-grid">${['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'].map(n => `<span class="dp-dow">${n}</span>`).join('')}${cells}</div>`;
+  }
+  function openPicker() {
+    addPP.close(false);
+    const d = parse(addDate); dpMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+    renderPicker(); dpPop.hidden = false; addDay.setAttribute('aria-expanded', 'true');
+    (dpPop.querySelector('.dp-day.sel') || dpPop.querySelector('.dp-day:not(:disabled)'))?.focus();
+  }
+  function closePicker(refocus) {
+    if (dpPop.hidden) return;
+    dpPop.hidden = true; addDay.setAttribute('aria-expanded', 'false');
+    if (refocus) addDay.focus();
+  }
+  addDay.addEventListener('click', () => dpPop.hidden ? openPicker() : closePicker(false));
+  dpPop.addEventListener('click', e => {
+    const nav = e.target.closest('[data-nav]');
+    if (nav) { dpMonth = new Date(dpMonth.getFullYear(), dpMonth.getMonth() + Number(nav.dataset.nav), 1); renderPicker(); return; }
+    const day = e.target.closest('.dp-day');
+    if (day && !day.disabled) { setAddDate(day.dataset.date); closePicker(false); addTitle.focus(); }
+  });
+  dpPop.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePicker(true); return; }
+    const cur = e.target.closest('.dp-day'); if (!cur) return;
+    const step = { ArrowLeft:-1, ArrowRight:1, ArrowUp:-5, ArrowDown:5 }[e.key]; if (!step) return;
+    e.preventDefault();
+    const days = [...dpPop.querySelectorAll('.dp-day')], i = days.indexOf(cur);
+    let j = i + step;
+    while (days[j] && days[j].disabled) j += Math.sign(step);
+    days[j]?.focus();
+  });
+  document.addEventListener('pointerdown', e => { if (!dpPop.hidden && !e.target.closest('.dp')) closePicker(false); });
+
+  /* ---------- project picker: dropdown of tags with "Ajouter un tag" (add form + task detail) ---------- */
+  function projectPicker(root, { onOpen = () => {}, onDone = () => {} } = {}) {
+    const btn = root.querySelector('.pp-btn'), pop = root.querySelector('.pp-pop'), label = root.querySelector('.pp-label');
+    let value = null, showOld = false;
+    function set(id) {
+      const p = proj(id);
+      value = p ? p.id : null;
+      btn.setAttribute('style', hueStyle(p));
+      btn.classList.toggle('empty', !p);
+      label.textContent = p ? p.name : 'Aucun tag';
+      btn.title = 'Tag : ' + (p ? p.name : 'aucun');
+    }
+    function renderList(adding) {
+      const opt = (p, text) => `<button type="button" role="option" class="pp-opt hue" style="${hueStyle(p)}" data-id="${p ? p.id : ''}" aria-selected="${(p ? p.id : null) === value}"><span class="sw"></span><span>${text}</span></button>`;
+      const list = [...db.projects].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+      const active = list.filter(isActiveTag), old = list.filter(p => !isActiveTag(p));
+      const oldHtml = old.length
+        ? `<button type="button" class="pp-old" data-act="old" aria-expanded="${showOld}">${CHEV}<span>Anciens tags · ${old.length}</span></button>${showOld ? old.map(p => opt(p, esc(p.name))).join('') : ''}` : '';
+      pop.innerHTML = `<div class="pp-list">${opt(null, 'Aucun tag')}${active.map(p => opt(p, esc(p.name))).join('')}${oldHtml}</div><hr>`
+        + (adding
+          ? `<div class="pp-new"><input class="pp-new-input" type="text" maxlength="40" placeholder="Nom du tag" aria-label="Nom du nouveau tag"><button type="button" class="pp-ok" data-act="create">Créer</button></div>`
+          : `<button type="button" class="pp-add" data-act="new"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2.5v9M2.5 7h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Ajouter un tag</button>`
+            + `<button type="button" class="pp-add pp-manage" data-act="manage"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 4h10M2 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="5" cy="4" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="10" r="1.8" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/></svg>Gérer les tags</button>`);
+      if (adding) pop.querySelector('.pp-new-input').focus();
+    }
+    function open() {
+      onOpen();
+      const cur = proj(value); showOld = !!cur && !isActiveTag(cur); // an old tag already chosen: show it selected
+      renderList(false); pop.hidden = false; btn.setAttribute('aria-expanded', 'true');
+      (pop.querySelector('[aria-selected="true"]') || pop.querySelector('.pp-opt')).focus();
+    }
+    function close(refocus) {
+      if (pop.hidden) return;
+      pop.hidden = true; btn.setAttribute('aria-expanded', 'false');
+      if (refocus) btn.focus();
+    }
+    function createTag() {
+      const input = pop.querySelector('.pp-new-input'), name = input.value.trim();
+      if (!name) { input.focus(); return; }
+      const p = projectFor(name); p.saved = true;
+      save(); set(p.id); close(false); render(); onDone(p.id);
+      toast(`Tag « ${p.name} » enregistré`);
+    }
+    btn.addEventListener('click', () => pop.hidden ? open() : close(false));
+    pop.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.act === 'old') { showOld = !showOld; renderList(false); pop.querySelector('.pp-old').focus(); }
+      else if (b.dataset.act === 'new') renderList(true);
+      else if (b.dataset.act === 'manage') { close(false); openTagMgr(); }
+      else if (b.dataset.act === 'create') createTag();
+      else if (b.classList.contains('pp-opt')) { set(b.dataset.id || null); close(false); onDone(value); }
+    });
+    pop.addEventListener('keydown', e => {
+      if (e.target.classList.contains('pp-new-input')) {
+        if (e.key === 'Enter') { e.preventDefault(); createTag(); }
+        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); renderList(false); pop.querySelector('.pp-add').focus(); }
+        return;
+      }
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); return; }
+      const items = [...pop.querySelectorAll('button')], i = items.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown') { e.preventDefault(); items[Math.min(i + 1, items.length - 1)].focus(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); items[Math.max(i - 1, 0)].focus(); }
+    });
+    const outside = e => { if (!pop.hidden && !root.contains(e.target)) close(false); };
+    document.addEventListener('pointerdown', outside);
+    return { get: () => value, set, close, isOpen: () => !pop.hidden, destroy: () => document.removeEventListener('pointerdown', outside) };
+  }
+  const addPP = projectPicker($('#add-pp'), { onOpen: () => closePicker(false), onDone: () => addTitle.focus() });
+  const edPP = projectPicker($('#ed-pp'), { onDone: () => { if (editing) { editing.projectId = edPP.get(); commit(); } } });
+
+  function renderAddControls() {
+    if (!addDate || addDate < todayIso()) setAddDate(defaultAddDate());
+    else setAddDate(addDate);
+    addPP.set(addPP.get());
+  }
+
+  function render() {
+    renderHeader(); renderFilters(); renderGrid(); renderAddControls();
+    if (ui.inlineDate) { openInline(ui.inlineFocus); ui.inlineFocus = false; }
+    $('#sample-note').hidden = !db.sample;
+    $('#focus-veil').hidden = !ui.focus;
+  }
+
+  /* ---------- focus mode: today's column alone (the waiting / finished groups keep their own fold state) ---------- */
+  function setFocus(on) {
+    if (!!ui.focus === on) return;
+    if (on) { ui.roll = 0; ui.week = defaultWeek(); addDate = null; } // bring today back on screen
+    ui.focus = on; render();
+    if (on) grid.querySelector('.focus-day')?.scrollIntoView({ block:'nearest', behavior:'smooth' });
+  }
+  $('#focus-veil').onclick = () => setFocus(false);
+
+  /* ---------- inline quick add at the bottom of today / future columns: title + tag only (always "À faire") ---------- */
+  const PLUS = '<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2.5v9M2.5 7h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const inlineRow = () => `<li class="inline-add"><button type="button" class="ia-open body" data-act="ia"><span class="st">${PLUS}</span><span class="ia-lbl">Ajouter une tâche</span></button></li>`;
+  let inlineTag = null, inlinePP = null;
+  function openInline(focus) {
+    const date = ui.inlineDate;
+    const li = grid.querySelector(`.day[data-date="${date}"] .inline-add`);
+    inlinePP?.destroy(); inlinePP = null;
+    if (!li) { ui.inlineDate = null; return; }
+    li.classList.add('open');
+    li.innerHTML = `<div class="ia-form body"><span class="st">${ICON.todo}</span><input class="ia-input" type="text" maxlength="160" placeholder="Nouvelle tâche…" aria-label="Intitulé de la nouvelle tâche">
+      <div class="pp ia-pp"><button type="button" class="dp-btn pp-btn hue ia-tag" aria-haspopup="listbox" aria-expanded="false" aria-label="Tag"><span class="sw"></span><span class="pp-label">Aucun tag</span></button>
+      <div class="pp-pop" role="listbox" aria-label="Choisir un tag" hidden></div></div></div>`;
+    const input = li.querySelector('.ia-input');
+    input.value = ui.inlineDraft || '';
+    inlinePP = projectPicker(li.querySelector('.ia-pp'), { onDone: id => { inlineTag = id; inlinePP?.set(id); grid.querySelector('.inline-add.open .ia-input')?.focus(); } });
+    inlinePP.set(inlineTag);
+    input.addEventListener('input', () => { ui.inlineDraft = input.value; });
+    input.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Escape') { e.preventDefault(); closeInline(); return; }
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const title = input.value.trim(); if (!title) return;
+      const p = proj(inlinePP.get());
+      const t = { id:uid(), title, projectId:p ? p.id : null, state:'todo', date, created:Date.now(), createdAt:Date.now() };
+      db.tasks.push(t); reveal(t); ui.flash = t.id; ui.inlineDraft = ''; ui.inlineFocus = true; save(); render(); // stays open for the next one
+    });
+    if (focus) input.focus();
+  }
+  function closeInline() { ui.inlineDate = null; ui.inlineDraft = ''; inlinePP?.destroy(); inlinePP = null; render(); }
+  // clicking elsewhere closes an empty inline row (a typed draft is kept)
+  document.addEventListener('pointerdown', e => {
+    if (!ui.inlineDate || e.target.closest('.inline-add.open, .ia-open')) return;
+    if (!(ui.inlineDraft || '').trim()) closeInline();
+  });
+
+  /* ---------- toast ---------- */
+  let toastTimer;
+  function toast(msg, label, fn) {
+    toastEl.innerHTML = `<span>${esc(msg)}</span>${label ? `<button type="button">${esc(label)}</button>` : ''}`;
+    if (label) toastEl.querySelector('button').onclick = () => { fn(); toastEl.hidden = true; };
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastEl.hidden = true; }, 5000);
+  }
+  const reveal = t => { if (!passes(t)) { ui.filter.clear(); saveUi(); } }; // a task hidden by the tag filter: show everything again
+  const goTo = date => { ui.view = 'week'; ui.week = monday(parse(date)); addDate = null; render(); };
+
+  /* ---------- actions ---------- */
+  /* ---------- creation dialog (same look as the detail) ---------- */
+  const creator = $('#creator'), addHint = $('#add-hint');
+  const addStateVal = () => addForm.querySelector('input[name="add-state"]:checked')?.value || 'todo';
+  function openCreator(date) {
+    $('#cr-heading').textContent = 'Nouvelle tâche';
+    addTitle.value = '';
+    addForm.querySelector('#add-st-todo').checked = true;
+    addHint.hidden = true;
+    setAddDate(date || defaultAddDate());
+    addPP.set(addPP.get());
+    creator.showModal();
+    addTitle.focus();
+  }
+  // Follow-up of a waiting task: same tag, same day, "À faire", title prefilled (still editable)
+  function openFollowUp(t) {
+    openCreator(shownDate(t));
+    $('#cr-heading').textContent = 'Nouvelle relance';
+    addTitle.value = `Relance - ${t.title}`.slice(0, 160);
+    addPP.set(t.projectId);
+    addTitle.setSelectionRange(addTitle.value.length, addTitle.value.length);
+  }
+  addForm.querySelectorAll('input[name="add-state"]').forEach(r => r.addEventListener('change', () => { addHint.hidden = addStateVal() === 'todo'; }));
+  $('#add-open').onclick = () => openCreator();
+  $('#cr-close').onclick = () => creator.close();
+  creator.addEventListener('click', e => { if (e.target === creator) creator.close(); });
+  creator.addEventListener('close', () => { closePicker(false); addPP.close(false); });
+
+  addForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const title = addTitle.value.trim();
+    if (!title) { addTitle.focus(); return; }
+    if (!addDate || addDate < todayIso()) { setAddDate(anchorDay()); return; }
+    const p = proj(addPP.get());
+    const t = { id:uid(), title, projectId:p ? p.id : null, state:'todo', date:addDate, created:Date.now(), createdAt:Date.now() };
+    applyState(t, addStateVal()); // "En cours" lands on today whatever day was picked
+    db.tasks.push(t); reveal(t); ui.flash = t.id; save(); creator.close(); render();
+    const where = shownDate(t);
+    weekDates().includes(where)
+      ? toast(`Ajoutée ${fmtLong.format(parse(where))}`)
+      : toast(`Ajoutée ${fmtLong.format(parse(where))}`, 'Voir', () => goTo(where));
+  });
+
+  const taskOf = el => db.tasks.find(x => x.id === el?.closest('.task')?.dataset.id);
+  // keeps keyboard focus on the task after a re-render, without scrolling to where it moved (e.g. down into "Terminées")
+  const focusCard = id => grid.querySelector(`.task[data-id="${id}"] .check`)?.focus({ preventScroll:true });
+  function setState(t, s) {
+    if (t.state === s) return;
+    applyState(t, s); ui.flash = t.id; save(); render(); focusCard(t.id);
+  }
+  const toggle = t => setState(t, t.state === 'done' ? (t.prev && t.prev !== 'done' ? t.prev : 'todo') : 'done');
+
+  const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
+  function inlineEdit(li, t, x, y) {
+    // caret where the click landed (falls back to the end)
+    let at = t.title.length;
+    try {
+      const cp = document.caretPositionFromPoint?.(x, y), cr = !cp && document.caretRangeFromPoint?.(x, y);
+      if (cp) at = cp.offset; else if (cr) at = cr.startOffset;
+    } catch {}
+    const open = li.querySelector('.open'), meta = open.querySelector('.p');
+    const wrap = document.createElement('div');
+    wrap.className = 'open editing';
+    wrap.innerHTML = '<div class="txt"><textarea class="t t-edit" rows="1" maxlength="160" aria-label="Intitulé de la tâche"></textarea></div>';
+    const ta = wrap.querySelector('textarea');
+    ta.value = t.title;
+    if (meta) wrap.firstChild.append(meta.cloneNode(true));
+    open.replaceWith(wrap);
+    li.draggable = false; li.classList.add('is-editing');
+    const fit = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+    fit(); ta.focus(); ta.setSelectionRange(Math.min(at, ta.value.length), Math.min(at, ta.value.length));
+    let finished = false;
+    const finish = keep => {
+      if (finished) return; finished = true;
+      const v = ta.value.trim().replace(/\s+/g, ' ');
+      if (keep && v && v !== t.title) { t.title = v; save(); }
+      render();
+    };
+    ta.addEventListener('input', fit);
+    ta.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+    });
+    ta.addEventListener('blur', () => finish(true));
+  }
+
+  let suppressClick = false;
+  grid.addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    if (suppressClick) { suppressClick = false; return; }
+    if (btn.dataset.act === 'focus') { setFocus(!ui.focus); grid.querySelector('.focus-toggle')?.focus({ preventScroll:true }); return; }
+    if (btn.dataset.act === 'fold') {
+      const g = btn.dataset.grp; ui.folded[g] = !ui.folded[g]; saveUi(); render();
+      grid.querySelector(`.grp-toggle[data-grp="${g}"]`)?.focus({ preventScroll:true }); return;
+    }
+    if (btn.dataset.act === 'ia') { ui.inlineDate = btn.closest('.day').dataset.date; ui.inlineDraft = ''; ui.inlineFocus = true; render(); return; }
+    if (btn.dataset.act === 'add') {
+      openCreator(btn.closest('.day').dataset.date);
+      addTitle.focus();
+      return;
+    }
+    const t = taskOf(btn);
+    if (!t) return;
+    if (btn.dataset.act === 'start') { setState(t, 'doing'); return; }
+    if (btn.dataset.act === 'wait') { setState(t, 'waiting'); return; }
+    if (btn.dataset.act === 'back') { setState(t, 'todo'); return; }
+    if (btn.dataset.act === 'del') { deleteTask(t); return; }
+    if (btn.dataset.act === 'follow') { openFollowUp(t); return; }
+    // Desktop: a click right on the title text edits it in place (not for finished tasks)
+    if (btn.dataset.act === 'detail' && e.target.closest('.t') && t.state !== 'done' && finePointer.matches) {
+      inlineEdit(btn.closest('.task'), t, e.clientX, e.clientY); return;
+    }
+    if (btn.dataset.act === 'detail') { openEditor(t); return; }   // clicking the task opens its detail
+    if (btn.dataset.act === 'toggle') toggle(t);                   // only the check finishes / reopens it
+  });
+
+  /* context menu: right click, long press (touch), or the keyboard menu key / Shift+F10 */
+  const menu = $('#menu');
+  let menuTask = null;
+  function openMenu(t, x, y) {
+    menuTask = t;
+    const p = proj(t.projectId);
+    menu.setAttribute('style', hueStyle(p));
+    menu.innerHTML = `<div class="mh">${esc(t.title)}</div>`
+      // primary action first, then the other states (the current one is left out), then detail / delete
+      + (t.state !== 'done' ? `<button type="button" role="menuitem" data-state="done" class="mi-primary"><span class="mi-ic">${ICON.done}</span>Terminer la tâche</button><hr>` : '')
+      + ['todo', 'doing', 'waiting'].filter(s => s !== t.state).map(s => `<button type="button" role="menuitem" data-state="${s}"><span class="mi-ic">${ICON[s]}</span>${STATES[s]}</button>`).join('')
+      + (t.state === 'waiting' ? `<hr><button type="button" role="menuitem" data-act="follow"><span class="mi-ic">${PLUS}</span>Créer une relance</button>` : '')
+      + '<hr><button type="button" role="menuitem" data-act="edit">Voir détail</button><button type="button" role="menuitem" data-act="delete" class="mi-danger">Supprimer</button>';
+    grid.querySelectorAll('.menu-open').forEach(n => n.classList.remove('menu-open'));
+    grid.querySelector(`.task[data-id="${t.id}"]`)?.classList.add('menu-open');
+    menu.hidden = false;
+    const r = menu.getBoundingClientRect();
+    const left = Math.max(8, Math.min(x, innerWidth - r.width - 8));
+    const top = y + r.height > innerHeight - 8 ? Math.max(8, y - r.height) : y;
+    menu.style.left = left + 'px'; menu.style.top = top + 'px';
+    (menu.querySelector('[aria-checked="false"]') || menu.querySelector('button')).focus();
+  }
+  function closeMenu(refocus) {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    grid.querySelectorAll('.menu-open').forEach(n => n.classList.remove('menu-open'));
+    const id = menuTask?.id; menuTask = null;
+    if (refocus && id) focusCard(id);
+  }
+  function menuAt(li, x, y) {
+    const t = taskOf(li); if (!t) return;
+    if (x == null) { const r = li.getBoundingClientRect(); x = r.left + 12; y = r.bottom + 4; }
+    openMenu(t, x, y);
+  }
+  grid.addEventListener('contextmenu', e => {
+    const li = e.target.closest('.task'); if (!li) return;
+    e.preventDefault();
+    const keyboard = e.button !== 2 && e.clientX === 0 && e.clientY === 0;
+    keyboard ? menuAt(li) : menuAt(li, e.clientX, e.clientY);
+  });
+  let press = null;
+  const cancelPress = () => { if (press) { clearTimeout(press.timer); press = null; } };
+  grid.addEventListener('pointerdown', e => {
+    suppressClick = false;
+    if (e.pointerType === 'mouse') return;
+    const li = e.target.closest('.task'); if (!li) return;
+    const x = e.clientX, y = e.clientY;
+    press = { x, y, timer:setTimeout(() => {
+      press = null; suppressClick = true;
+      try { navigator.vibrate?.(12); } catch {}
+      menuAt(li, x, y);
+    }, 480) };
+  });
+  grid.addEventListener('pointermove', e => { if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) cancelPress(); });
+  ['pointerup', 'pointercancel'].forEach(ev => grid.addEventListener(ev, cancelPress));
+
+  menu.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || !menuTask) return;
+    const t = menuTask;
+    closeMenu(false);
+    if (b.dataset.state) setState(t, b.dataset.state);
+    else if (b.dataset.act === 'edit') openEditor(t);
+    else if (b.dataset.act === 'follow') openFollowUp(t);
+    else if (b.dataset.act === 'delete') deleteTask(t);
+  });
+  menu.addEventListener('keydown', e => {
+    const items = [...menu.querySelectorAll('button')], i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    else if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
+    else if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeMenu(true); }
+    else if (e.key === 'Tab') closeMenu(false);
+  });
+  document.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target)) closeMenu(false); });
+  addEventListener('scroll', () => closeMenu(false), true);
+  addEventListener('resize', () => closeMenu(false));
+  addEventListener('blur', () => closeMenu(false));
+
+  filtersEl.addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    if (chip.dataset.act === 'more') {
+      ui.moreOpen = !ui.moreOpen; renderFilters();
+      if (ui.moreOpen) filtersEl.querySelector('.more-pop .chip')?.focus();
+      return;
+    }
+    const k = chip.dataset.key;
+    const was = ui.filter.has(k); ui.filter.clear();
+    if (!was) ui.filter.add(k);
+    ui.moreOpen = false; saveUi(); render();
+  });
+
+  $('#prev').onclick = () => { if (ui.view === 'rolling') ui.roll--; else ui.week = addDays(ui.week, -7); addDate = null; render(); };
+  $('#next').onclick = () => { if (ui.view === 'rolling') ui.roll++; else ui.week = addDays(ui.week, 7); addDate = null; render(); };
+  $('#today').onclick = () => { ui.roll = 0; ui.week = defaultWeek(); addDate = null; render(); };
+  document.querySelectorAll('.views button').forEach(b => b.addEventListener('click', () => {
+    if (ui.view === b.dataset.view) return;
+    ui.view = b.dataset.view;
+    ui.roll = 0; ui.week = defaultWeek();
+    addDate = null; render();
+  }));
+  $('#keep-sample').onclick = () => { db.sample = false; save(); render(); };
+  $('#clear-sample').onclick = () => {
+    const before = db; db = { projects:[], tasks:[], sample:false }; ui.filter.clear(); save(); saveUi(); render();
+    toast('Exemples effacés', 'Annuler', () => { db = before; save(); render(); });
+  };
+
+  /* drag & drop: sort a task within its own state group (en cours / à faire / en attente / terminées),
+     in its column or — when the date may change — in another day's same group. State never changes by dragging. */
+  let dragId = null, dropAt = null;          // dropAt = { list, before: task li | null }
+  const rankOf = t => t.rank ?? Infinity;    // manual order; tasks never sorted yet keep creation order, after the sorted ones
+  const clearDropMarks = () => grid.querySelectorAll('.drop,.ins-before,.ins-after').forEach(n => n.classList.remove('drop', 'ins-before', 'ins-after'));
+  grid.addEventListener('dragstart', e => {
+    const li = e.target.closest('.task'); if (!li) return;
+    dragId = li.dataset.id; li.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId);
+  });
+  // on document: after a drop the source card is re-rendered away, so its dragend never bubbles to the grid
+  const endDrag = () => { dragId = null; dropAt = null; grid.querySelectorAll('.dragging').forEach(n => n.classList.remove('dragging')); clearDropMarks(); };
+  document.addEventListener('dragend', endDrag);
+  grid.addEventListener('dragover', e => {
+    const day = e.target.closest('.day'); if (!day || !dragId) return;
+    clearDropMarks(); dropAt = null;
+    const t = db.tasks.find(x => x.id === dragId); if (!t) return;
+    const sameDay = day.dataset.date === shownDate(t);
+    if (!sameDay) {
+      if ((day.dataset.date < todayIso() && t.state !== 'done') || TODAY_ONLY[t.state]) return; // past days only take finished tasks; en cours / en attente stay on today
+    }
+    const group = [...day.querySelectorAll(`.task[data-state="${t.state}"]`)].filter(n => n.dataset.id !== dragId);
+    const over = e.target.closest('.task');
+    if (over && over.dataset.id !== dragId && over.dataset.state !== t.state && sameDay) return; // other group: not allowed
+    e.preventDefault();
+    const list = day.querySelector('.list');
+    if (over && over.dataset.state === t.state && over.dataset.id !== dragId) {
+      const r = over.getBoundingClientRect(), after = e.clientY > r.top + r.height / 2;
+      over.classList.add(after ? 'ins-after' : 'ins-before');
+      dropAt = { list, before: after ? group[group.indexOf(over) + 1] || null : over, anchor: over, after };
+    } else if (!sameDay) {
+      day.classList.add('drop');                    // other day: goes to the end of its group there
+      dropAt = { list, before: null };
+    } else if (over && over.dataset.id === dragId) {
+      dropAt = null;                                // over itself: nothing to do
+    }
+  });
+  grid.addEventListener('dragleave', e => { if (!grid.contains(e.relatedTarget)) clearDropMarks(); });
+  grid.addEventListener('drop', e => {
+    const day = e.target.closest('.day'); if (!day || !dragId) return;
+    e.preventDefault();
+    const t = db.tasks.find(x => x.id === dragId), at = dropAt; endDrag();
+    if (!t || !at) return render();
+    const date = day.dataset.date;
+    if (date !== shownDate(t)) moveTo(t, date);
+    // renumber the whole group of that column in its new order
+    const ids = [...day.querySelectorAll(`.task[data-state="${t.state}"]`)].map(n => n.dataset.id).filter(id => id !== t.id);
+    const idx = at.before ? ids.indexOf(at.before.dataset.id) : ids.length;
+    ids.splice(idx < 0 ? ids.length : idx, 0, t.id);
+    ids.forEach((id, i) => { const x = db.tasks.find(y => y.id === id); if (x) x.rank = i; });
+    ui.flash = t.id; save(); render();
+  });
+
+  /* editor */
+  let editing = null;
+  const fmtDate = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const fmtTime = new Intl.DateTimeFormat('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  const stamp = ms => `${fmtDate.format(ms)} à ${fmtTime.format(ms)}`;
+  const daysAgo = d => { const n = Math.round((parse(todayIso()) - parse(iso(new Date(d)))) / 864e5); return n <= 0 ? 'aujourd’hui' : n === 1 ? 'hier' : `il y a ${n} j`; };
+  function renderInfo(t) {
+    const rows = [];
+    const created = t.createdAt || (t.created > 1e12 ? t.created : null);
+    rows.push(['Créée', created ? `${stamp(created)}<span class="rel">${daysAgo(created)}</span>` : 'Date inconnue']);
+    if (t.state === 'waiting') {
+      const n = waitDays(t), since = t.waitingSince || t.date;
+      rows.push(['En attente', `<span class="big${n >= 5 ? ' stale' : ''}">${n} jour${n > 1 ? 's' : ''}</span>depuis le ${fmtDate.format(parse(since))}`]);
+    } else if (t.state === 'doing') {
+      rows.push(['En cours', t.doingAt ? `depuis le ${stamp(t.doingAt)}<span class="rel">${daysAgo(t.doingAt)}</span>` : 'Date inconnue']);
+    } else if (t.state === 'done') {
+      rows.push(['Terminée', t.doneAt ? `le ${stamp(t.doneAt)}<span class="rel">${daysAgo(t.doneAt)}</span>` : 'Date inconnue']);
+    }
+    $('#ed-info').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+    $('#ed-follow').hidden = t.state !== 'waiting'; // follow-ups only make sense for a waiting task
+  }
+  function openEditor(t) {
+    editing = t;
+    edTitle.value = t.title;
+    edForm.querySelectorAll('input[name="ed-state"]').forEach(r => { r.checked = r.value === t.state; }); 
+    edPP.set(t.projectId);
+    edDate.value = shownDate(t);
+    edHint.hidden = true;
+    syncDateField();
+    renderInfo(t);
+    editor.showModal(); // no auto-selection of the title
+    $('#ed-close').focus();
+  }
+  // a finished task may go back in time (it was done that day); any other task can only move to today or later
+  const pastPick = () => edDate.value && editing && editing.state !== 'done' && edDate.value !== editing.date && snapWeekday(edDate.value) < todayIso();
+  edDate.addEventListener('input', () => {
+    if (pastPick()) { edHint.textContent = 'Impossible de placer une tâche dans le passé : choisissez aujourd’hui ou un jour à venir.'; edHint.hidden = false; }
+    else if (edDate.value && snapWeekday(edDate.value) !== edDate.value) { edHint.textContent = 'Le week-end n’est pas affiché : la tâche passera au lundi suivant.'; edHint.hidden = false; }
+    else edHint.hidden = true;
+  });
+  // "En cours" is pinned to today: lock the day field while it is selected
+  function syncDateField() {
+    const doing = TODAY_ONLY[edForm.querySelector('input[name="ed-state"]:checked')?.value];
+    if (doing) { edDate.value = anchorDay(); edHint.textContent = 'Une tâche en cours ou en attente est toujours sur aujourd’hui.'; edHint.hidden = false; }
+    else if (edDate.disabled) { edDate.value = editing ? shownDate(editing) : edDate.value; edHint.hidden = true; }
+    edDate.disabled = doing;
+    // finished: any date; otherwise a past task keeps its own date valid, other past picks are refused in JS
+    if (editing?.state === 'done') edDate.removeAttribute('min');
+    else if (editing) edDate.min = shownDate(editing) < todayIso() ? shownDate(editing) : todayIso();
+  }
+  /* The detail saves as you go — no Save/Cancel; the X (or Échap) just closes it */
+  function commit() { if (!editing) return; reveal(editing); save(); render(); renderInfo(editing); }
+  edTitle.addEventListener('input', () => {
+    const v = edTitle.value.trim();
+    if (editing && v) { editing.title = v; commit(); }
+  });
+  edTitle.addEventListener('blur', () => { if (editing && !edTitle.value.trim()) edTitle.value = editing.title; });
+  edForm.querySelectorAll('input[name="ed-state"]').forEach(r => r.addEventListener('change', () => {
+    if (!editing) return;
+    applyState(editing, r.value);
+    if (TODAY_ONLY[r.value]) editing.date = anchorDay();
+    edDate.value = shownDate(editing); // e.g. a past finished task reopened as "À faire" comes back to today
+    syncDateField(); commit();
+  }));
+  edDate.addEventListener('change', () => {
+    if (!editing || !edDate.value || edDate.disabled || pastPick()) return;
+    const d = snapWeekday(edDate.value);
+    if (d === shownDate(editing)) return;
+    moveTo(editing, d); commit();
+    if (!weekDates().includes(shownDate(editing))) toast(`Déplacée au ${fmtLong.format(parse(d))}`, 'Voir', () => { editor.close(); goTo(d); });
+  });
+  $('#ed-close').onclick = () => editor.close();
+  edForm.addEventListener('submit', e => { e.preventDefault(); editor.close(); });
+  $('#ed-follow').onclick = () => { const t = editing; if (!t) return; editor.close(); openFollowUp(t); };
+  $('#ed-delete').onclick = () => { const t = editing; if (!t) return; editor.close(); deleteTask(t); };
+  function deleteTask(t) {
+    const idx = db.tasks.indexOf(t), p = proj(t.projectId);
+    if (idx < 0) return;
+    db.tasks.splice(idx, 1); save(); render();
+    toast('Tâche supprimée', 'Annuler', () => {
+      if (p && !proj(p.id)) db.projects.push(p);
+      db.tasks.splice(idx, 0, t); save(); render();
+    });
+  }
+  // Clicking the backdrop (outside the detail) closes it; the form fills the dialog, so only backdrop clicks target the dialog itself
+  editor.addEventListener('click', e => { if (e.target === editor) editor.close(); });
+  editor.addEventListener('close', () => { editing = null; edPP.close(false); });
+
+  /* ---------- tag manager: rename, colour, merge, delete (confirmations stay inside the dialog, above any toast) ---------- */
+  const tagMgr = $('#tagmgr'), tmList = $('#tm-list'), tmHint = $('#tm-hint');
+  const XICON = '<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  let tmColor = null, tmPending = null; // row whose palette is open · { id, kind:'del'|'merge', target }
+  const tmRow = id => `.tm-row[data-id="${id}"]`;
+  function openTagMgr() {
+    tmColor = null; tmPending = null; tmHint.hidden = true;
+    renderTagMgr(); tagMgr.showModal(); $('#tm-close').focus();
+  }
+  function renderTagMgr(focusSel) {
+    const list = [...db.projects].sort((a, b) => isActiveTag(b) - isActiveTag(a) || a.name.localeCompare(b.name, 'fr')); // active first
+    if (!list.length) { tmList.innerHTML = '<li class="empty">Aucun tag pour l’instant. Créez-en depuis le choix du tag d’une tâche.</li>'; return; }
+    tmList.innerHTML = list.map(p => {
+      const n = db.tasks.filter(t => t.projectId === p.id).length, old = !isActiveTag(p), others = list.filter(q => q !== p);
+      const meta = (n ? `${n} tâche${n > 1 ? 's' : ''}` : 'aucune tâche') + (old ? ' · ancien' : '');
+      let extra = '';
+      if (tmColor === p.id) {
+        const taken = db.projects.filter(q => q !== p && isActiveTag(q));
+        extra += `<div class="tm-pal" role="group" aria-label="Couleur de ${esc(p.name)}">${HUES.map(h => {
+          const who = taken.find(q => hueGap(q.hue, h) < HUE_NEAR);
+          return `<button type="button" class="tm-hue hue${who ? ' taken' : ''}" style="--h:${h};--cm:1" data-act="hue" data-hue="${h}" aria-pressed="${hueGap(p.hue, h) < 1}" title="${who ? `Déjà utilisée par « ${esc(who.name)} »` : 'Couleur libre'}" aria-label="Couleur ${HUES.indexOf(h) + 1}${who ? `, déjà utilisée par ${esc(who.name)}` : ''}"></button>`;
+        }).join('')}</div>`;
+      }
+      if (tmPending?.id === p.id) {
+        const del = tmPending.kind === 'del', tgt = proj(tmPending.target), nm = esc(p.name);
+        const msg = del
+          ? `Supprimer « ${nm} » ?${n ? ` ${n > 1 ? `Ses ${n} tâches n’auront` : 'Sa tâche n’aura'} plus de tag.` : ''}`
+          : `Fusionner « ${nm} » dans « ${esc(tgt?.name || '')} » ?${n ? ` ${n > 1 ? `Ses ${n} tâches passeront` : 'Sa tâche passera'} sur « ${esc(tgt?.name || '')} »,` : ''} « ${nm} » disparaîtra.`;
+        extra += `<div class="tm-confirm"><span>${msg}</span><button type="button" class="ghost" data-act="cancel">Annuler</button><button type="button" class="${del ? 'danger' : 'primary'} tm-ok" data-act="confirm">${del ? 'Supprimer' : 'Fusionner'}</button></div>`;
+      }
+      return `<li class="tm-row hue${old ? ' is-old' : ''}" style="${hueStyle(p)}" data-id="${p.id}">
+        <button type="button" class="tm-sw" data-act="color" aria-expanded="${tmColor === p.id}" title="Changer la couleur" aria-label="Couleur de ${esc(p.name)}"><span class="sw"></span></button>
+        <div class="tm-main"><input class="tm-name" type="text" maxlength="40" value="${esc(p.name)}" aria-label="Nom du tag"><span class="tm-meta">${meta}</span></div>
+        ${others.length ? `<select class="tm-merge" aria-label="Fusionner « ${esc(p.name)} » dans un autre tag"><option value="">Fusionner…</option>${others.map(q => `<option value="${q.id}"${tmPending?.id === p.id && tmPending.target === q.id ? ' selected' : ''}>${esc(q.name)}</option>`).join('')}</select>` : '<span></span>'}
+        <button type="button" class="tm-del" data-act="del" title="Supprimer le tag" aria-label="Supprimer le tag « ${esc(p.name)} »">${XICON}</button>
+        ${extra}
+      </li>`;
+    }).join('');
+    if (focusSel) tmList.querySelector(focusSel)?.focus();
+  }
+  function tmChanged(focusSel, msg) {
+    save(); saveUi(); render();
+    if (editing) edPP.set(editing.projectId);
+    if (msg) { tmHint.textContent = msg; tmHint.hidden = false; }
+    renderTagMgr(focusSel);
+  }
+  tmList.addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const p = proj(b.closest('.tm-row')?.dataset.id); if (!p) return;
+    const act = b.dataset.act;
+    if (act === 'color') { tmColor = tmColor === p.id ? null : p.id; tmPending = null; renderTagMgr(`${tmRow(p.id)} .tm-sw`); }
+    else if (act === 'hue') { p.hue = Number(b.dataset.hue); tmChanged(`${tmRow(p.id)} .tm-hue[data-hue="${p.hue}"]`); }
+    else if (act === 'del') { tmPending = { id:p.id, kind:'del' }; tmColor = null; renderTagMgr(`${tmRow(p.id)} .tm-ok`); }
+    else if (act === 'cancel') { tmPending = null; renderTagMgr(`${tmRow(p.id)} .tm-del`); }
+    else if (act === 'confirm') {
+      const { kind, target } = tmPending, tgt = kind === 'merge' ? proj(target) : null;
+      if (kind === 'merge' && !tgt) return;
+      db.tasks.forEach(t => { if (t.projectId === p.id) t.projectId = tgt ? tgt.id : null; });
+      if (ui.filter.has(p.id)) { ui.filter.clear(); if (tgt) ui.filter.add(tgt.id); } // a filter on the old tag follows it
+      if (inlineTag === p.id) inlineTag = tgt ? tgt.id : null;
+      if (tgt && p.saved) tgt.saved = true;
+      db.projects = db.projects.filter(q => q !== p);
+      tmPending = null;
+      tmChanged(tgt ? `${tmRow(tgt.id)} .tm-name` : '#tm-close', tgt ? `« ${p.name} » a été fusionné dans « ${tgt.name} ».` : `« ${p.name} » a été supprimé.`);
+    }
+  });
+  tmList.addEventListener('change', e => {
+    const p = proj(e.target.closest('.tm-row')?.dataset.id); if (!p) return;
+    if (e.target.classList.contains('tm-merge')) {
+      tmPending = e.target.value ? { id:p.id, kind:'merge', target:e.target.value } : null; tmColor = null;
+      renderTagMgr(e.target.value ? `${tmRow(p.id)} .tm-ok` : `${tmRow(p.id)} .tm-merge`);
+    } else if (e.target.classList.contains('tm-name')) {
+      const v = e.target.value.trim().replace(/\s+/g, ' ');
+      const dup = db.projects.find(q => q !== p && q.name.toLowerCase() === v.toLowerCase());
+      if (!v || dup) {
+        e.target.value = p.name;
+        if (dup) { tmHint.textContent = `Un tag « ${dup.name} » existe déjà : pour les réunir, utilisez « Fusionner… ».`; tmHint.hidden = false; }
+        return;
+      }
+      if (v === p.name) return;
+      // the list is not rebuilt here: this runs on blur, and rebuilding would swallow the click that caused it
+      e.target.value = p.name = v; save(); render(); if (editing) edPP.set(editing.projectId);
+    }
+  });
+  tmList.addEventListener('keydown', e => {
+    if (!e.target.classList.contains('tm-name')) return;
+    if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+  });
+  $('#tm-close').onclick = () => tagMgr.close();
+  tagMgr.addEventListener('click', e => { if (e.target === tagMgr) tagMgr.close(); });
+  tagMgr.addEventListener('close', () => { tmColor = null; tmPending = null; tmHint.hidden = true; });
+
+  /* ---------- "⋯" menu in the header: export, tag manager ---------- */
+  const appMenu = $('#app-menu'), appMenuBtn = $('#app-menu-btn');
+  function openAppMenu() {
+    appMenu.hidden = false; appMenuBtn.setAttribute('aria-expanded', 'true');
+    const r = appMenuBtn.getBoundingClientRect(), w = appMenu.getBoundingClientRect().width;
+    appMenu.style.top = (r.bottom + 6) + 'px';
+    appMenu.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + 'px'; // right-aligned on the button
+    [...appMenu.querySelectorAll('button')].find(b => b.offsetParent)?.focus(); // first visible entry
+  }
+  function closeAppMenu(refocus) {
+    if (appMenu.hidden) return;
+    appMenu.hidden = true; appMenuBtn.setAttribute('aria-expanded', 'false');
+    if (refocus) appMenuBtn.focus();
+  }
+  appMenuBtn.onclick = () => appMenu.hidden ? openAppMenu() : closeAppMenu(false);
+  appMenu.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    closeAppMenu(false);
+    if (b.dataset.act === 'export') openExporter();
+    else if (b.dataset.act === 'import') openImporter();
+    else if (b.dataset.act === 'tags') openTagMgr();
+    else if (b.dataset.act === 'theme') toggleTheme();
+    else if (b.dataset.act === 'help') { $('#help').showModal(); $('#help-close').focus(); }
+  });
+  $('#help-btn').onclick = () => { $('#help').showModal(); $('#help-close').focus(); };
+  $('#help-close').onclick = () => $('#help').close();
+  $('#help').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+
+  /* ---------- light / dark mode: light by default, the choice is remembered in this browser ---------- */
+  const isDark = () => document.documentElement.dataset.theme === 'dark';
+  function syncTheme() {
+    const dark = isDark(), fab = $('#theme-toggle');
+    fab.setAttribute('aria-pressed', String(dark));
+    fab.title = dark ? 'Passer en mode clair' : 'Passer en mode sombre';
+    appMenu.querySelector('[data-act="theme"]').setAttribute('aria-checked', String(dark));
+  }
+  function toggleTheme() {
+    const t = isDark() ? 'light' : 'dark';
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem(KEY + '.theme', t); } catch {}
+    syncTheme();
+  }
+  $('#theme-toggle').onclick = toggleTheme;
+  syncTheme();
+  appMenu.addEventListener('keydown', e => {
+    const items = [...appMenu.querySelectorAll('button')].filter(b => b.offsetParent), i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeAppMenu(true); }
+    else if (e.key === 'Tab') closeAppMenu(false);
+  });
+  document.addEventListener('pointerdown', e => { if (!appMenu.hidden && !appMenu.contains(e.target) && !appMenuBtn.contains(e.target)) closeAppMenu(false); });
+  addEventListener('resize', () => closeAppMenu(false));
+  addEventListener('scroll', () => closeAppMenu(false), true);
+
+  /* ---------- export to JSON: upcoming tasks (not finished) or all of them ---------- */
+  // Inside the claude.ai viewer the file goes through the "downloads" capability (the viewer confirms the save);
+  // a copy opened on its own (no window.claude) falls back to a plain browser download.
+  const downloadsP = window.claude?.use ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+  const canFallback = !window.claude;
+  downloadsP.then(dl => { if (dl || canFallback) appMenu.querySelector('[data-act="export"]').hidden = false; }); // no way to save here: no menu entry
+  const exporter = $('#exporter'), exForm = $('#ex-form'), exMsg = $('#ex-msg');
+  const exScope = () => exForm.querySelector('input[name="ex-scope"]:checked').value;
+  const exTasks = scope => db.tasks.filter(t => scope === 'all' || t.state !== 'done');
+  function openExporter() {
+    $('#ex-n-upcoming').textContent = plural(exTasks('upcoming').length);
+    $('#ex-n-all').textContent = plural(exTasks('all').length);
+    exMsg.hidden = true; $('#ex-go').disabled = false;
+    exporter.showModal(); exForm.querySelector('input[name="ex-scope"]:checked').focus();
+  }
+  const plural = n => `${n} tâche${n > 1 ? 's' : ''}`;
+  const isoTime = ms => ms ? new Date(ms).toISOString() : null;
+  function exportJson(scope) {
+    const tasks = [...exTasks(scope)].sort((a, b) => shownDate(a).localeCompare(shownDate(b)) || ORDER[a.state] - ORDER[b.state] || rankOf(a) - rankOf(b) || a.created - b.created);
+    const used = new Set(tasks.map(t => t.projectId));
+    return JSON.stringify({
+      app:'Ancrage', format:1, exportedAt:new Date().toISOString(),
+      scope: scope === 'all' ? 'toutes' : 'a-venir',
+      tags: db.projects.filter(p => scope === 'all' || used.has(p.id)).map(p => ({ id:p.id, name:p.name, hue:p.hue })),
+      tasks: tasks.map(t => ({
+        id:t.id, title:t.title, state:t.state, stateLabel:STATES[t.state],
+        date:shownDate(t), tagId:t.projectId || null, tag:proj(t.projectId)?.name || null,
+        createdAt:isoTime(t.createdAt || (t.created > 1e12 ? t.created : null)),
+        doingSince: t.state === 'doing' ? isoTime(t.doingAt) : null,
+        waitingSince: t.state === 'waiting' ? (t.waitingSince || t.date) : null,
+        doneAt: t.state === 'done' ? isoTime(t.doneAt) : null
+      }))
+    }, null, 2);
+  }
+  const EX_ERR = { declined:'Export annulé.', rate_limited:'Une demande d’enregistrement est déjà ouverte : répondez-y, puis réessayez.', too_large:'Le fichier est trop volumineux pour être enregistré ici.' };
+  exForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const scope = exScope(), data = exportJson(scope);
+    const filename = `ancrage-${todayIso()}.json`;
+    const say = m => { exMsg.textContent = m; exMsg.hidden = false; };
+    const dl = await downloadsP;
+    if (!dl) {
+      if (!canFallback) { say('L’export n’est pas disponible ici.'); return; }
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type:'application/json' })); a.download = filename;
+      document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      exporter.close(); toast(`Export : ${plural(exTasks(scope).length)}`); return;
+    }
+    $('#ex-go').disabled = true; say('Confirmez l’enregistrement du fichier…');
+    try {
+      await dl.save({ filename, data });
+      exporter.close(); toast(`Export : ${plural(exTasks(scope).length)}`);
+    } catch (err) {
+      say(EX_ERR[err?.code] || 'L’export n’est pas disponible ici.');
+    } finally { $('#ex-go').disabled = false; }
+  });
+  $('#ex-close').onclick = () => exporter.close();
+  exporter.addEventListener('click', e => { if (e.target === exporter) exporter.close(); });
+
+  /* ---------- import from JSON (the export format; a bare array of tasks works too) ---------- */
+  const importer = $('#importer'), imForm = $('#im-form'), imFile = $('#im-file'), imDrop = $('#im-drop'), imMsg = $('#im-msg');
+  let imData = null; // { name, tags, tasks } once a file has been read and checked
+  const imMode = () => imForm.querySelector('input[name="im-mode"]:checked').value;
+  const imSay = (m, error) => { imMsg.textContent = m; imMsg.classList.toggle('is-error', !!error); imMsg.hidden = !m; };
+  function openImporter() {
+    imData = null; imFile.value = ''; imForm.querySelector('input[value="add"]').checked = true;
+    $('#im-file-label').textContent = 'Choisir un fichier JSON';
+    imSay(''); $('#im-modes').disabled = true; $('#im-go').disabled = true; $('#im-go').textContent = 'Importer';
+    importer.showModal(); $('#im-close').focus();
+  }
+  const isDay = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(parse(s));
+  const toMs = v => { if (v == null || v === '') return null; const n = typeof v === 'number' ? v : Date.parse(v); return Number.isFinite(n) ? n : null; };
+  const str = (v, max) => typeof v === 'string' ? v.trim().replace(/\s+/g, ' ').slice(0, max) : '';
+  function parseImport(text) {
+    let j; try { j = JSON.parse(text); } catch { return { error:'Ce fichier n’est pas un JSON valide.' }; }
+    const rawTasks = Array.isArray(j) ? j : Array.isArray(j?.tasks) ? j.tasks : null;
+    if (!rawTasks) return { error:'Aucune liste de tâches trouvée dans ce fichier.' };
+    const tags = (Array.isArray(j?.tags) ? j.tags : []).map(g => ({ id:str(g?.id, 60), name:str(g?.name, 40), hue:Number(g?.hue) })).filter(g => g.name);
+    const tasks = rawTasks.map(t => {
+      const title = str(t?.title, 160); if (!title) return null;
+      const state = STATES[t.state] ? t.state : 'todo';
+      return { id:str(t.id, 60), title, state, date:isDay(t.date) ? snapWeekday(t.date) : anchorDay(),
+        tagId:str(t.tagId ?? t.projectId, 60), tag:str(t.tag, 40),
+        createdAt:toMs(t.createdAt), doingAt:toMs(t.doingSince ?? t.doingAt), doneAt:toMs(t.doneAt),
+        waitingSince:isDay(t.waitingSince) ? t.waitingSince : null };
+    }).filter(Boolean);
+    if (!tasks.length) return { error:'Ce fichier ne contient aucune tâche avec un intitulé.' };
+    return { tags, tasks };
+  }
+  function imPreview() {
+    if (!imData) return;
+    const c = { doing:0, todo:0, waiting:0, done:0 }; imData.tasks.forEach(t => c[t.state]++);
+    const parts = [c.doing && `${c.doing} en cours`, c.todo && `${c.todo} à faire`, c.waiting && `${c.waiting} en attente`, c.done && `${c.done} terminée${c.done > 1 ? 's' : ''}`].filter(Boolean).join(', ');
+    const ids = new Set(db.tasks.map(t => t.id)), dup = imData.tasks.filter(t => t.id && ids.has(t.id)).length;
+    const nTags = new Set(imData.tasks.map(t => t.tagId || t.tag).filter(Boolean)).size;
+    imSay(`${plural(imData.tasks.length)} trouvée${imData.tasks.length > 1 ? 's' : ''} (${parts})${nTags ? ` · ${nTags} tag${nTags > 1 ? 's' : ''}` : ''}.`);
+    $('#im-add-note').textContent = dup ? `${plural(dup)} déjà présente${dup > 1 ? 's' : ''} ser${dup > 1 ? 'ont' : 'a'} ignorée${dup > 1 ? 's' : ''}.` : 'Les tâches déjà présentes sont ignorées.';
+    $('#im-replace-note').textContent = db.tasks.length ? `Vos ${plural(db.tasks.length)} actuelles et leurs tags sont supprimés.` : 'Vos tâches et tags actuels sont supprimés.';
+    const add = imMode() === 'add', n = add ? imData.tasks.length - dup : imData.tasks.length;
+    $('#im-go').textContent = !n ? 'Rien de nouveau à importer' : add ? `Importer ${plural(n)}` : `Remplacer par ${plural(n)}`;
+    $('#im-go').disabled = !n;
+  }
+  function readImportFile(file) {
+    if (!file) return;
+    $('#im-file-label').textContent = file.name;
+    imData = null; $('#im-modes').disabled = true; $('#im-go').disabled = true; $('#im-go').textContent = 'Importer';
+    if (file.size > 5 * 1024 * 1024) { imSay('Ce fichier est trop volumineux (5 Mo au maximum).', true); return; }
+    file.text().then(text => {
+      const r = parseImport(text);
+      if (r.error) { imSay(r.error, true); return; }
+      imData = { name:file.name, ...r }; $('#im-modes').disabled = false; imPreview();
+    }, () => imSay('Impossible de lire ce fichier.', true));
+  }
+  imFile.addEventListener('change', () => readImportFile(imFile.files[0]));
+  imForm.querySelectorAll('input[name="im-mode"]').forEach(r => r.addEventListener('change', imPreview));
+  ['dragenter', 'dragover'].forEach(ev => imDrop.addEventListener(ev, e => { e.preventDefault(); imDrop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => imDrop.addEventListener(ev, () => imDrop.classList.remove('over')));
+  imDrop.addEventListener('drop', e => { e.preventDefault(); readImportFile(e.dataTransfer.files[0]); });
+  imForm.addEventListener('submit', e => {
+    e.preventDefault(); if (!imData) return;
+    const before = JSON.parse(JSON.stringify(db)), replace = imMode() === 'replace';
+    if (replace) { db.tasks = []; db.projects = []; db.sample = false; ui.filter.clear(); }
+    // tags: same id, else same name, else a new tag (its colour kept unless an active tag already has it)
+    const tagMap = new Map();
+    const tagFor = (id, name) => {
+      if (id && tagMap.has(id)) return tagMap.get(id);
+      const g = imData.tags.find(x => x.id && x.id === id) || (name ? { id, name, hue:NaN } : null);
+      if (!g) return null;
+      let p = (g.id && proj(g.id)) || db.projects.find(q => q.name.toLowerCase() === g.name.toLowerCase());
+      if (!p) {
+        const taken = db.projects.filter(isActiveTag).map(q => q.hue);
+        const hue = Number.isFinite(g.hue) && taken.every(h => hueGap(h, g.hue) >= HUE_NEAR) ? g.hue : pickHue(taken);
+        p = { id:g.id || uid(), name:g.name, hue }; db.projects.push(p);
+      }
+      if (id) tagMap.set(id, p.id);
+      return p.id;
+    };
+    const ids = new Set(db.tasks.map(t => t.id)); let added = 0, skipped = 0;
+    imData.tasks.forEach(t => {
+      if (t.id && ids.has(t.id)) { skipped++; return; }
+      const id = t.id || uid(); ids.add(id);
+      const x = { id, title:t.title, projectId:tagFor(t.tagId, t.tag), state:t.state, date:t.date, created:Date.now() + added, createdAt:t.createdAt || Date.now() };
+      if (t.state === 'doing') x.doingAt = t.doingAt || Date.now();
+      if (t.state === 'waiting') x.waitingSince = t.waitingSince || t.date;
+      if (t.state === 'done' && t.doneAt) x.doneAt = t.doneAt;
+      db.tasks.push(x); added++;
+    });
+    save(); saveUi(); importer.close(); render();
+    toast(`${plural(added)} importée${added > 1 ? 's' : ''}${skipped ? ` · ${skipped} ignorée${skipped > 1 ? 's' : ''}` : ''}`, 'Annuler', () => { db = before; save(); render(); });
+  });
+  $('#im-close').onclick = () => importer.close();
+  importer.addEventListener('click', e => { if (e.target === importer) importer.close(); });
+
+  // ↑ / ↓ walk through the tasks of one day: the column of the focused task, else today (first task)
+  function moveTaskFocus(dir) {
+    const cur = document.activeElement?.closest?.('.task');
+    const day = cur?.closest('.day') || grid.querySelector('.day.is-today') || grid.querySelector(`.day[data-date="${anchorDay()}"]`) || grid.querySelector('.day');
+    const checks = day ? [...day.querySelectorAll('.task .check')] : [];
+    if (!checks.length) return;
+    const i = cur ? Math.max(0, Math.min(checks.length - 1, checks.indexOf(cur.querySelector('.check')) + dir)) : 0;
+    checks[i].focus({ preventScroll:true });
+    checks[i].closest('.task').scrollIntoView({ block:'nearest' });
+  }
+
+  // ← / → with a task focused: same position in the previous / next day's column (empty days are skipped).
+  // Past the edge of the screen the days scroll (a week at a time in "Semaine"). Returns false when no task is focused.
+  function moveTaskColumn(dir) {
+    const cur = document.activeElement?.closest?.('.task');
+    if (!cur || !grid.contains(cur)) return false;
+    const origin = cur.dataset.id, col0 = cur.closest('.day');
+    const idx = [...col0.querySelectorAll('.task .check')].indexOf(cur.querySelector('.check'));
+    let date = col0.dataset.date;
+    for (let n = 0; n < 10; n++) {
+      date = iso(stepWeekday(parse(date), dir));
+      if (!grid.querySelector(`.day[data-date="${date}"]`)) $(dir < 0 ? '#prev' : '#next').click();
+      const col = grid.querySelector(`.day[data-date="${date}"]`);
+      if (!col) break;
+      const checks = [...col.querySelectorAll('.task .check')];
+      if (checks.length) {
+        const c = checks[Math.min(Math.max(idx, 0), checks.length - 1)];
+        c.focus({ preventScroll:true }); c.closest('.task').scrollIntoView({ block:'nearest', inline:'nearest' });
+        return true;
+      }
+    }
+    focusCard(origin); // nothing found: stay on the same task if it is still on screen
+    return true;
+  }
+
+  // On a focused task: Espace opens its detail, Entrée checks / unchecks it (instead of both "clicking" the focused zone)
+  const taskKeyTarget = e => !e.ctrlKey && !e.metaKey && !e.altKey && e.target.closest?.('.task .check, .task .open:not(.editing)');
+  grid.addEventListener('keydown', e => {
+    const el = taskKeyTarget(e); if (!el || (e.key !== ' ' && e.key !== 'Enter')) return;
+    e.preventDefault();
+    if (e.repeat) return;
+    const t = taskOf(el); if (!t) return;
+    e.key === ' ' ? openEditor(t) : toggle(t);
+  });
+  grid.addEventListener('keyup', e => { if (e.key === ' ' && taskKeyTarget(e)) e.preventDefault(); }); // a button fires its click on Space keyup
+
+  /* shortcuts */
+  document.addEventListener('keydown', e => {
+    if (editor.open || creator.open || tagMgr.open || exporter.open || importer.open || $('#help').open || !appMenu.hidden || !menu.hidden || !dpPop.hidden || addPP.isOpen() || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input,select,textarea')) return;
+    if (e.key === 'a' || e.key === 'A') { e.preventDefault(); openCreator(); }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); moveTaskFocus(e.key === 'ArrowDown' ? 1 : -1); }
+    else if (e.key === 'ArrowLeft') { if (!moveTaskColumn(-1)) $('#prev').click(); }
+    else if (e.key === 'ArrowRight') { if (!moveTaskColumn(1)) $('#next').click(); }
+    else if (e.key === 't' || e.key === 'T') $('#today').click();
+    else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); setFocus(!ui.focus); }
+    else if (e.key === 'Escape' && ui.focus) setFocus(false);
+  });
+
+  // "Adaptatif" re-lays out when the window crosses a size threshold
+  [mqSmall].forEach(mq => mq.addEventListener('change', () => { if (ui.view === 'rolling') render(); }));
+  mqPhone.addEventListener('change', () => { ui.moreOpen = false; renderFilters(); });
+
+  fixHueClashes();
+  render();
+})();
+</script>
+
+</body></html>
