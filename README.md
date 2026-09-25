@@ -14,6 +14,7 @@ L'application tient dans un seul fichier : [`ancrage.html`](ancrage.html).
   ```
 
   puis ouvrir http://localhost:8766.
+- **Comme application** (Chrome, Edge) : depuis http://localhost:8766 ou un hébergement en `https://`, menu du navigateur → « Installer Ancrage ». Le manifeste et les icônes sont dans `manifest.webmanifest` et `icons/`.
 
 Les tâches sont enregistrées dans le stockage local du navigateur. Pour les sauvegarder ou les passer d'un navigateur à l'autre : menu ⋯ → Exporter / Importer (JSON).
 
