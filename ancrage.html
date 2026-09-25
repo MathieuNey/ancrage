@@ -1214,7 +1214,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   document.addEventListener('pointerdown', e => { if (ui.moreOpen && !e.target.closest('.more')) closeMore(false); });
   filtersEl.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.moreOpen) { e.preventDefault(); e.stopPropagation(); closeMore(true); } });
 
-  function card(t) {
+  function card(t, isToday = true) {
     const p = proj(t.projectId);
     // The project name is not written on cards (its colour says it); it shows in the detail only
     const dn = t.state === 'doing' ? doingDays(t) : 0;
@@ -1230,13 +1230,13 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         })()
       : '';
     const checkTip = t.state === 'done' ? 'Décocher la tâche' : 'Terminer la tâche';
-    // Hover actions: ▶ start (to-do / waiting) and ⏸ put on hold (to-do / in progress)
+    // Hover actions: ▶ start (to-do / waiting) and ⏸ put on hold (to-do / in progress), in today's column only
     // (waiting tasks only offer "+ relance" and delete on hover; their other states are in the menu and the detail)
     const follow = t.state === 'waiting'
       ? `<button class="quick" type="button" data-act="follow" title="Créer une relance" aria-label="Créer une relance pour « ${esc(t.title)} »">${PLUS}</button>` : '';
-    const start = t.state === 'todo'
+    const start = isToday && t.state === 'todo'
       ? `<button class="quick" type="button" data-act="start" title="Passer en cours" aria-label="Passer « ${esc(t.title)} » en cours"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 2.2v7.6L9.8 6z" fill="currentColor"/></svg></button>` : '';
-    const hold = t.state === 'todo' || t.state === 'doing'
+    const hold = isToday && (t.state === 'todo' || t.state === 'doing')
       ? `<button class="quick hold" type="button" data-act="wait" title="Mettre en attente" aria-label="Mettre « ${esc(t.title)} » en attente"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="3" y="2.5" width="2.1" height="7" rx=".7" fill="currentColor"/><rect x="6.9" y="2.5" width="2.1" height="7" rx=".7" fill="currentColor"/></svg></button>` : '';
     const back = t.state === 'doing'
       ? `<button class="quick hold" type="button" data-act="back" title="Remettre à faire" aria-label="Remettre « ${esc(t.title)} » à faire"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.3 2.6L2 4.9l2.3 2.3M2.3 4.9h4.6a2.6 2.6 0 0 1 0 5.2H5.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : '';
@@ -1265,10 +1265,11 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       const exp = !ui.folded[grp];
       return `<li class="done-sep${n ? '' : ' is-empty'}"><button type="button" class="grp-toggle" data-act="fold" data-grp="${grp}" aria-expanded="${exp}" title="${exp ? 'Replier' : 'Déplier'}">${CHEV}<span>${label} · ${n}</span></button></li>`;
     };
-    const group = (list, grp) => ui.folded[grp] ? '' : list.map(card).join('');
-    if (!isToday) return open.map(card).join('')
-      + (waiting.length ? sep('En attente', waiting.length, 'waiting') + group(waiting, 'waiting') : '') + done.map(card).join('');
-    return (fin ? finCard(fin) : tasks.length ? open.map(card).join('') : '<li class="empty">Rien de prévu.</li>')
+    const cardIn = t => card(t, isToday);
+    const group = (list, grp) => ui.folded[grp] ? '' : list.map(cardIn).join('');
+    if (!isToday) return open.map(cardIn).join('')
+      + (waiting.length ? sep('En attente', waiting.length, 'waiting') + group(waiting, 'waiting') : '') + done.map(cardIn).join('');
+    return (fin ? finCard(fin) : tasks.length ? open.map(cardIn).join('') : '<li class="empty">Rien de prévu.</li>')
       + inlineRow() // quick add right under the tasks still to do
       + sep('En attente', waiting.length, 'waiting') + group(waiting, 'waiting')
       + sep('Terminées', done.length, 'done') + group(done, 'done');
