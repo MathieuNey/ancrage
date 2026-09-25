@@ -586,7 +586,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   <div class="focus-veil" id="focus-veil" title="Quitter le mode focus" hidden></div>
 
   <footer class="foot">
-    <span>Enregistré dans ce navigateur.</span>
+    <span id="store-status">Enregistré dans ce navigateur.</span>
     <span class="signature">Claudé par Mathieu Ney</span>
   </footer>
 </div>
@@ -722,7 +722,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
     </div>
-    <p class="help-note">Enregistré dans ce navigateur.</p>
+    <p class="help-note" id="help-store">Enregistré dans ce navigateur.</p>
     <section class="help-sec">
       <h3>Souris et tactile</h3>
       <dl class="help-list">
@@ -919,6 +919,25 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch {}
   };
   const saveUi = () => { try { localStorage.setItem(KEY + '.ui', JSON.stringify({ filter:[...ui.filter], folded:ui.folded })); } catch {} };
+
+  /* Persistent storage: asks the browser not to clear the saved tasks by itself when disk space runs low.
+     Chrome / Edge / Safari decide silently; Firefox shows a prompt, hence the request on the first click or key, never on load.
+     Missing or refused (artifact frame, file opened locally): the footer simply keeps its plain text. */
+  function showStore(persisted) {
+    const text = persisted ? 'Enregistré dans ce navigateur (protégé).' : 'Enregistré dans ce navigateur.';
+    const tip = persisted ? 'Le navigateur ne l’effacera pas de lui-même ; vider les données de navigation l’efface quand même.'
+      : 'Le navigateur peut l’effacer s’il manque de place : pensez à exporter vos tâches.';
+    ['store-status', 'help-store'].forEach(id => { const el = document.getElementById(id); if (el) { el.textContent = text; el.title = tip; } });
+  }
+  async function askPersist() {
+    try {
+      if (!navigator.storage?.persist || await navigator.storage.persisted()) return;
+      showStore(await navigator.storage.persist());
+    } catch {}
+  }
+  try { navigator.storage?.persisted?.().then(showStore, () => showStore(false)); } catch { showStore(false); }
+  const firstAction = () => { removeEventListener('pointerdown', firstAction, true); removeEventListener('keydown', firstAction, true); askPersist(); };
+  addEventListener('pointerdown', firstAction, true); addEventListener('keydown', firstAction, true);
 
   let db = load();
   const ui = { view:'rolling', roll:0, week:defaultWeek(), filter:new Set(), flash:null, folded:{ waiting:false, done:false } }; // "Adaptatif" is the default view on every load; groups start unfolded
