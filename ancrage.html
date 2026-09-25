@@ -18,6 +18,7 @@ try { document.documentElement.dataset.theme = localStorage.getItem('semainier.v
   --solid-l:.50; --solid-c:.15; --solid-ink:#FFFFFF;
   --tag-l:.45; --tag-c:.13; --hatch-l:.925; --hatch-c:.035;
   --shadow:0 1px 2px rgb(20 26 36 / .06), 0 10px 30px -14px rgb(20 26 36 / .22);
+  --late:oklch(.55 .19 25); --late-ink:#FFFFFF; --due:oklch(.55 .12 70);
   --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
@@ -31,6 +32,7 @@ try { document.documentElement.dataset.theme = localStorage.getItem('semainier.v
     --solid-l:.74; --solid-c:.13; --solid-ink:#0E1116;
     --tag-l:.80; --tag-c:.10; --hatch-l:.235; --hatch-c:.03;
     --shadow:0 1px 2px rgb(0 0 0 / .4), 0 12px 30px -14px rgb(0 0 0 / .7);
+    --late:oklch(.72 .16 25); --late-ink:#1A0D0D; --due:oklch(.78 .11 75);
   }
 }
 :root[data-theme="dark"]{
@@ -41,6 +43,7 @@ try { document.documentElement.dataset.theme = localStorage.getItem('semainier.v
   --solid-l:.74; --solid-c:.13; --solid-ink:#0E1116;
   --tag-l:.80; --tag-c:.10; --hatch-l:.235; --hatch-c:.03;
   --shadow:0 1px 2px rgb(0 0 0 / .4), 0 12px 30px -14px rgb(0 0 0 / .7);
+    --late:oklch(.72 .16 25); --late-ink:#1A0D0D; --due:oklch(.78 .11 75);
 }
 
 *,*::before,*::after{box-sizing:border-box}
@@ -72,26 +75,10 @@ button,input,select{font:inherit;color:inherit}
 .ghost:disabled{opacity:.45;cursor:default}
 
 /* Quick add */
-.dp{position:relative;min-width:0}
 .dp-btn{height:38px;width:100%;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:0 12px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden}
 .dp-btn svg{flex:none;color:var(--ink-2)}
 .dp-btn span{overflow:hidden;text-overflow:ellipsis}
 .dp-btn:hover,.dp-btn[aria-expanded="true"]{border-color:var(--ink);background:var(--surface)}
-.dp-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:15;width:272px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px}
-.dp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.dp-title{font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:-.01em}
-.dp-nav{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:16px;line-height:1}
-.dp-nav:hover:not(:disabled){background:var(--surface-2);border-color:var(--line-2)}
-.dp-nav:disabled{opacity:.35;cursor:default}
-.dp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
-.dp-dow{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:center;padding-bottom:4px}
-.dp-day{position:relative;height:36px;border:1px solid transparent;border-radius:8px;background:none;cursor:pointer;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink)}
-.dp-day:hover:not(:disabled){background:var(--surface-2);border-color:var(--line-2)}
-.dp-day.out{color:var(--muted)}
-.dp-day:disabled{color:var(--line-2);cursor:default;text-decoration:line-through;text-decoration-color:var(--line)}
-.dp-day.today{border-color:var(--ink);font-weight:600}
-.dp-day.sel,.dp-day.sel:hover{background:var(--ink);border-color:var(--ink);color:var(--surface)}
-.dp-day.busy::after{content:"";position:absolute;left:50%;bottom:4px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:currentColor;opacity:.5}
 .pp{position:relative;min-width:0}
 .pp-btn .sw{flex:none;width:10px;height:10px;border-radius:50%;background:var(--solid)}
 .pp-btn.empty .sw{background:none;border:1.5px dashed var(--line-2)}
@@ -267,7 +254,7 @@ dialog{overflow:visible}
 }
 .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;padding-top:1px}
 .t{font-size:13.5px;line-height:1.3;font-weight:500;overflow-wrap:anywhere;align-self:flex-start} /* hugs the text, so "on the text" is precise */
-@media (hover:hover) and (pointer:fine){ .task:not([data-state="done"]) .open .t{cursor:text} }
+@media (hover:hover) and (pointer:fine) and (min-width:600px){ .task:not([data-state="done"]) .open .t{cursor:text} } /* phone layout: the title opens the detail */
 .open.editing{cursor:default}
 .task.is-editing .qa{display:none}
 .t-edit{display:block;width:100%;align-self:stretch;margin:0;padding:0 2px;border:0;border-radius:3px;background:var(--surface);color:var(--ink);font:inherit;font-weight:inherit;resize:none;overflow:hidden;
@@ -296,6 +283,19 @@ dialog{overflow:visible}
 .since.stale{color:oklch(.52 .15 45);border-color:currentColor;font-weight:600}
 .since-t{font-weight:500;opacity:.8}
 .since-t.stale{font-weight:800;opacity:1} /* 5 days or more */
+/* Deadline: a small chip after the title — grey with the date, amber on the day, solid red once past (to-do, in progress, waiting) */
+.dl{display:inline-flex;align-items:center;gap:3px;vertical-align:1px;margin-left:6px;font-family:var(--f-mono);font-size:10.5px;font-weight:500;line-height:1.5;padding:0 5px;border-radius:4px;border:1px solid var(--line-2);color:var(--ink-2);background:var(--surface);white-space:nowrap;letter-spacing:0;text-transform:none;opacity:1}
+.dl svg{flex:none}
+.dl.soon{border-color:var(--due);color:var(--due);font-weight:600}
+.dl.late{background:var(--late);border-color:var(--late);color:var(--late-ink);font-weight:600}
+.task[data-state="doing"] .dl{border-color:var(--surface)}
+.task[data-state="doing"] .dl.late{background:var(--surface);color:var(--late)}
+.task[data-state="waiting"] .dl{flex:none;margin-left:0}
+.due-wrap{position:relative;display:flex}
+.due-wrap input{padding-right:38px}
+.due-clear{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:0;border-radius:6px;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer;padding:0}
+.due-clear:hover{background:var(--surface-2);color:var(--ink)}
+.info .big.late{color:var(--late)}
 
 .task[data-state="done"]{background:transparent;border-color:transparent;color:var(--muted)}
 .task[data-state="done"] .body{--py:3px}
@@ -372,7 +372,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
 .ed{display:grid;gap:16px;padding:20px}
 .ed h2{margin:0;font-family:var(--f-display);font-size:20px;font-weight:700;letter-spacing:-.015em}
 .field{display:grid;gap:6px}
-.field > span,.states legend{font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:.02em}
+.field > span:not(.due-wrap),.field > label,.states legend{font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:.02em}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .states{border:0;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .states legend{padding:0;margin-bottom:6px}
@@ -608,15 +608,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     </div>
     <label class="field"><span>Intitulé</span><input id="add-title" type="text" maxlength="160" placeholder="Préparer la démo du module congés"></label>
     <div class="row2">
-      <div class="field"><span>Jour</span>
-        <div class="dp">
-          <button type="button" id="add-day" class="dp-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="dp-pop">
-            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            <span id="add-day-label">—</span>
-          </button>
-          <div class="dp-pop" id="dp-pop" role="dialog" aria-label="Choisir un jour" hidden></div>
-        </div>
-      </div>
+      <label class="field"><span>Jour</span><input id="add-day" type="date" required></label>
       <div class="field"><span id="add-tag-lbl">Tag</span>
         <div class="pp" id="add-pp">
           <button type="button" id="add-project" class="dp-btn pp-btn hue" aria-haspopup="listbox" aria-expanded="false" aria-controls="pp-pop" aria-labelledby="add-tag-lbl add-project">
@@ -627,6 +619,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         </div>
       </div>
     </div>
+    <p class="hint" id="add-day-hint" hidden></p>
     <fieldset class="states states-3">
       <legend>État</legend>
       <label><input type="radio" name="add-state" id="add-st-todo" value="todo" checked><span data-icon="todo">À faire</span></label>
@@ -634,7 +627,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       <label><input type="radio" name="add-state" id="add-st-waiting" value="waiting"><span data-icon="waiting">En attente</span></label>
     </fieldset>
     <p class="hint" id="add-hint" hidden>Une tâche en cours ou en attente est placée sur aujourd’hui.</p>
-    <label class="field"><span>Répéter</span><select id="add-repeat"></select></label>
+    <div class="row2">
+      <label class="field"><span>Répéter</span><select id="add-repeat"></select></label>
+      <div class="field"><label for="add-due">Deadline</label><span class="due-wrap"><input id="add-due" type="date"><button type="button" class="due-clear" id="add-due-clear" title="Retirer la deadline" aria-label="Retirer la deadline" hidden><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span></div>
+    </div>
     <label class="field"><span>Note</span><textarea id="add-note" rows="3" maxlength="2000" placeholder="Contexte, lien, personne à relancer…"></textarea></label>
     <div class="ed-actions ed-actions-end">
       <button class="primary" type="submit">Ajouter la tâche</button>
@@ -671,7 +667,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       <label><input type="radio" name="ed-state" id="ed-st-waiting" value="waiting"><span data-icon="waiting">En attente</span></label>
       <label><input type="radio" name="ed-state" id="ed-st-done" value="done"><span data-icon="done">Terminé</span></label>
     </fieldset>
-    <label class="field"><span>Répéter</span><select id="ed-repeat"></select></label>
+    <div class="row2">
+      <label class="field"><span>Répéter</span><select id="ed-repeat"></select></label>
+      <div class="field"><label for="ed-due">Deadline</label><span class="due-wrap"><input id="ed-due" type="date"><button type="button" class="due-clear" id="ed-due-clear" title="Retirer la deadline" aria-label="Retirer la deadline" hidden><svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></span></div>
+    </div>
     <p class="hint" id="ed-rep-hint" hidden></p>
     <label class="field"><span>Note</span><textarea id="ed-note" rows="3" maxlength="2000" placeholder="Ajouter une note…"></textarea></label>
     <dl class="info" id="ed-info" aria-label="Historique"></dl>
@@ -711,7 +710,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       <label class="ex-opt"><input type="radio" name="ex-scope" value="upcoming" checked><span><b>Tâches à venir</b><small>À faire, en cours et en attente · <span id="ex-n-upcoming">0</span></small></span></label>
       <label class="ex-opt"><input type="radio" name="ex-scope" value="all"><span><b>Toutes les tâches</b><small>Y compris les terminées · <span id="ex-n-all">0</span></small></span></label>
     </fieldset>
-    <p class="hint ex-note">Fichier JSON avec, pour chaque tâche, son jour, son état, son tag, sa note et ses dates (création, début, attente, fin).</p>
+    <p class="hint ex-note">Fichier JSON avec, pour chaque tâche, son jour, son état, son tag, sa note, sa deadline et ses dates (création, début, attente, fin).</p>
     <p class="tm-hint" id="ex-msg" role="status" hidden></p>
     <div class="ed-actions ed-actions-end">
       <button class="primary" type="submit" id="ex-go">Exporter</button>
@@ -759,6 +758,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         <dt>À faire en retard</dt><dd>reportées sur aujourd’hui</dd>
         <dt>Jours passés</dt><dd>tâches terminées uniquement</dd>
         <dt>Relance</dt><dd>crée une tâche à faire</dd>
+        <dt>Deadline dépassée</dt><dd>pastille rouge, tant que la tâche n’est pas terminée</dd>
         <dt>Tâche récurrente</dt><dd>la suivante apparaît une fois celle-ci terminée</dd>
         <dt>Tags anciens</dt><dd>plus utilisés aujourd’hui ni après</dd>
       </dl>
@@ -841,8 +841,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   };
   const fmtShort = new Intl.DateTimeFormat('fr-FR', { day:'numeric', month:'short' });
   const fmtLong = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'short' });
+  const fmtDue = new Intl.DateTimeFormat('fr-FR', { weekday:'short', day:'numeric', month:'short' });
   const todayIso = () => iso(new Date());
   const defaultWeek = () => { const t = new Date(), wd = t.getDay(); return monday(wd === 0 || wd === 6 ? addDays(t, 2) : t); };
+  const dayDiff = (a, b) => Math.round((parse(a) - parse(b)) / 864e5); // a − b, in days
   const snapWeekday = s => { const d = parse(s), wd = d.getDay(); return wd === 6 ? iso(addDays(d, 2)) : wd === 0 ? iso(addDays(d, 1)) : s; };
 
   /* ---------- data ---------- */
@@ -868,6 +870,8 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const wk = defaultWeek(); let n = 0;
     const tasks = plan.flatMap((day, i) => day.map(([title, projectId, state]) =>
       fakeDates({ id:uid(), title, projectId, state, date:iso(addDays(wk, i)), created:++n })));
+    const due = { 'Validation du plan de bascule par la DSI':2, 'Rédiger le compte rendu du COPIL':4, 'Répondre au prospect sur l’hébergement':7, 'Préparer la démo du module congés':8 };
+    tasks.forEach(t => { if (t.title in due) t.due = iso(addDays(wk, due[t.title])); });
     return { projects, tasks:[...tasks, ...nextWeekSample(wk)], series:[], sample:true, sampleNext:true };
   }
 
@@ -918,7 +922,11 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     return seed();
   }
   const save = () => {
-    db.series.forEach(s => { const l = latestOcc(s); if (l) s.tpl = { title:l.title, projectId:l.projectId, note:l.note || '' }; }); // template = latest occurrence
+    db.series.forEach(s => { // template = latest occurrence (its deadline kept as a gap in days from its planned date)
+      const l = latestOcc(s); if (!l) return;
+      s.tpl = { title:l.title, projectId:l.projectId, note:l.note || '' };
+      if (l.due) s.tpl.dueIn = dayDiff(l.due, l.occ);
+    });
     const used = new Set([...db.tasks.map(t => t.projectId), ...db.series.map(s => s.tpl.projectId)]);
     db.projects = db.projects.filter(p => p.saved || used.has(p.id)); // tags added from the list are kept even without tasks
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch {}
@@ -1019,6 +1027,9 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   const shownDate = t => TODAY_ONLY[t.state] ? anchorDay() : CARRIED[t.state] && t.date <= anchorDay() ? anchorDay() : t.date;
   const waitDays = t => Math.max(0, Math.round((parse(todayIso()) - parse(t.waitingSince || t.date)) / 864e5));
   const doingDays = t => t.doingAt ? Math.max(0, Math.round((parse(todayIso()) - parse(iso(new Date(t.doingAt)))) / 864e5)) : 0;
+  // Deadline (t.due): any date, weekends and past included. Past for a task still open (to do, in progress, waiting) = late
+  const isLate = t => !!t.due && t.state !== 'done' && t.due < todayIso();
+  const isDueDay = v => /^\d{4}-\d{2}-\d{2}$/.test(v) && v >= '1900' && !isNaN(parse(v)); // a date input yields '0002-…' while the year is typed
   // Changing a task's day; for a finished one the completion date follows (same time of day)
   function moveTo(t, d) {
     t.date = d;
@@ -1090,6 +1101,8 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       const src = latestOcc(s) || s.tpl;
       const t = { id:uid(), title:src.title, projectId:proj(src.projectId) ? src.projectId : null, state:'todo', date:occDay(occ), created:Date.now(), createdAt:Date.now(), seriesId:s.id, occ };
       if (src.note) t.note = src.note;
+      const dueIn = src.due && src.occ ? dayDiff(src.due, src.occ) : src.dueIn; // same gap between planned date and deadline
+      if (Number.isInteger(dueIn)) t.due = iso(addDays(parse(occ), dueIn));
       db.tasks.push(t); s.last = occ; added = true;
     });
     return added;
@@ -1110,11 +1123,15 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     if (s) {
       Object.assign(s, { every:r.every, unit:r.unit, start:t.occ });
       const nx = seriesTasks(s).find(x => x.occ > t.occ && x.state === 'todo'); // already created on the old rhythm: moved to the new one
-      if (nx) { nx.occ = nextOcc(s, t.occ) || nx.occ; nx.date = occDay(nx.occ); s.last = nx.occ; }
+      if (nx) {
+        const dueIn = nx.due ? dayDiff(nx.due, nx.occ) : null;
+        nx.occ = nextOcc(s, t.occ) || nx.occ; nx.date = occDay(nx.occ); s.last = nx.occ;
+        if (dueIn != null) nx.due = iso(addDays(parse(nx.occ), dueIn));
+      }
       return;
     }
     const start = t.state === 'done' ? t.date : shownDate(t);
-    const ns = { id:uid(), every:r.every, unit:r.unit, start, last:start, tpl:{ title:t.title, projectId:t.projectId, note:t.note || '' } };
+    const ns = { id:uid(), every:r.every, unit:r.unit, start, last:start, tpl:{ title:t.title, projectId:t.projectId, note:t.note || '', ...(t.due ? { dueIn:dayDiff(t.due, start) } : {}) } };
     db.series.push(ns); t.seriesId = ns.id; t.occ = start;
   }
   // choices of a "Répéter" list for a task on `day`: "premier / dernier jour hors week-end" only when the day is one,
@@ -1125,13 +1142,14 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     sel.innerHTML = '<option value="">Ne pas répéter</option>' + keys.map(k => `<option value="${k}">${REPEAT[k].label}</option>`).join('');
     sel.value = keys.includes(current) ? current : '';
   }
+  const FLAG = '<svg width="9" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 10.5V1.8M3 2.2h5.6l-1.2 2 1.2 2H3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const REP_ICON = '<svg class="rep-ic" width="11" height="11" viewBox="0 0 12 12" role="img" aria-label="Tâche récurrente"><title>Tâche récurrente</title><path d="M9.8 4.6A4 4 0 0 0 2.4 4M2.2 7.4a4 4 0 0 0 7.4.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M2 1.8v2.4h2.4M10 10.2V7.8H7.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   /* ---------- elements ---------- */
   const $ = s => document.querySelector(s);
   const grid = $('#grid'), filtersEl = $('#filters'), addForm = $('#add'), addTitle = $('#add-title'),
         addProject = $('#add-project'), addDay = $('#add-day'),
-        editor = $('#editor'), edForm = $('#ed-form'), edTitle = $('#ed-title'),         edDate = $('#ed-date'), edHint = $('#ed-hint'), toastEl = $('#toast');
+        editor = $('#editor'), edForm = $('#ed-form'), edTitle = $('#ed-title'),         edDate = $('#ed-date'), edDue = $('#ed-due'), edHint = $('#ed-hint'), toastEl = $('#toast');
 
   document.querySelectorAll('.states span[data-icon]').forEach(s => s.insertAdjacentHTML('afterbegin', ICON[s.dataset.icon]));
 
@@ -1190,7 +1208,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     // The project name is not written on cards (its colour says it); it shows in the detail only
     const dn = t.state === 'doing' ? doingDays(t) : 0;
     // days in progress, folded into the label: "En cours · depuis 3 j" (nothing added on the first day; bolder from 5 days, like waiting tasks)
-    const meta = t.state === 'doing' ? `<span class="p">En cours${dn ? `<span class="since-t${dn >= 5 ? ' stale' : ''}" title="En cours depuis le ${fmtLong.format(new Date(t.doingAt))}"> · depuis ${dn === 1 ? 'hier' : dn + ' j'}</span>` : ''}</span>`
+    // deadline chip (open tasks only): after the title (to do), in the label (in progress), before the day counter (waiting)
+    const late = isLate(t);
+    const due = t.due && t.state !== 'done' ? `<span class="dl${late ? ' late' : t.due === todayIso() ? ' soon' : ''}" title="Deadline : ${fmtLong.format(parse(t.due))}">${FLAG}${late ? `${dayDiff(todayIso(), t.due)} j de retard` : t.due === todayIso() ? 'auj.' : fmtDue.format(parse(t.due))}</span>` : '';
+    const meta = t.state === 'doing' ? `<span class="p">En cours${dn ? `<span class="since-t${dn >= 5 ? ' stale' : ''}" title="En cours depuis le ${fmtLong.format(new Date(t.doingAt))}"> · depuis ${dn === 1 ? 'hier' : dn + ' j'}</span>` : ''}${due}</span>`
       : t.state === 'waiting' ? (() => {
           const n = waitDays(t);
           const label = n === 0 ? 'auj.' : n + ' j';
@@ -1213,7 +1234,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     return `<li class="task hue${ui.flash === t.id ? ' new' : ''}" data-id="${t.id}" data-state="${t.state}" draggable="true" style="${hueStyle(p)}" title="Cliquer pour voir le détail · coche : ${checkTip.toLowerCase()} · clic droit ou appui long : plus d’options">
       <div class="body">
         <button class="check" type="button" data-act="toggle" title="${checkTip}" aria-label="${checkTip} : ${esc(t.title)}"><span class="st">${ICON[t.state]}</span></button>
-        <button class="open" type="button" data-act="detail" aria-haspopup="dialog" aria-label="${esc(t.title)} — ${STATES[t.state]}${t.seriesId ? ', récurrente' : ''}. Voir le détail."><span class="txt"><span class="t">${esc(t.title)}${t.seriesId ? REP_ICON : ''}</span>${meta}</span></button>
+        <button class="open" type="button" data-act="detail" aria-haspopup="dialog" aria-label="${esc(t.title)} — ${STATES[t.state]}${t.seriesId ? ', récurrente' : ''}${late ? ', en retard' : ''}. Voir le détail."><span class="txt"><span class="t">${esc(t.title)}${t.seriesId ? REP_ICON : ''}${t.state === 'todo' ? due : ''}</span>${t.state === 'waiting' ? due : ''}${meta}</span></button>
       </div>${quick}
     </li>`;
   }
@@ -1267,67 +1288,27 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     ui.flash = null;
   }
 
-  /* ---------- add-form day: monthly weekday picker ---------- */
+  /* ---------- add-form day: native date field (today or later; a weekend day goes to the Monday after) ---------- */
   let addDate = null;
-  const dpPop = $('#dp-pop');
-  let dpMonth = null;
-  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-  const fmtMonth = new Intl.DateTimeFormat('fr-FR', { month:'long', year:'numeric' });
+  const addDayHint = $('#add-day-hint');
+  const dayHint = msg => { addDayHint.textContent = msg; addDayHint.hidden = !msg; };
   // Default day: first open (today or later) weekday of the displayed week, else today
   const defaultAddDate = () => weekDates().find(d => d >= todayIso()) || anchorDay();
   function setAddDate(d) {
     addDate = d < todayIso() ? anchorDay() : snapWeekday(d);
-    $('#add-day-label').textContent = cap(fmtLong.format(parse(addDate)));
+    addDay.value = addDate; addDay.min = todayIso(); dayHint('');
     fillRepeat($('#add-repeat'), addDate, undefined, ''); // a new task has no rule to keep
   }
-  function renderPicker() {
-    const today = todayIso(), y = dpMonth.getFullYear(), m = dpMonth.getMonth();
-    const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
-    const busy = new Set(db.tasks.map(shownDate));
-    const now = new Date(), canPrev = y * 12 + m > now.getFullYear() * 12 + now.getMonth();
-    let cells = '';
-    for (let wk = monday(first); wk <= last; wk = addDays(wk, 7)) {
-      for (let i = 0; i < 5; i++) {
-        const d = addDays(wk, i), s = iso(d), out = d.getMonth() !== m, past = s < today;
-        cells += `<button type="button" class="dp-day${out ? ' out' : ''}${s === today ? ' today' : ''}${s === addDate ? ' sel' : ''}${busy.has(s) ? ' busy' : ''}" data-date="${s}"${past ? ' disabled' : ''} aria-label="${cap(fmtLong.format(d))}"${s === addDate ? ' aria-pressed="true"' : ''}>${d.getDate()}</button>`;
-      }
-    }
-    dpPop.innerHTML = `<div class="dp-head">
-        <button type="button" class="dp-nav" data-nav="-1" aria-label="Mois précédent"${canPrev ? '' : ' disabled'}>‹</button>
-        <span class="dp-title">${cap(fmtMonth.format(first))}</span>
-        <button type="button" class="dp-nav" data-nav="1" aria-label="Mois suivant">›</button>
-      </div>
-      <div class="dp-grid">${['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'].map(n => `<span class="dp-dow">${n}</span>`).join('')}${cells}</div>`;
-  }
-  function openPicker() {
-    addPP.close(false);
-    const d = parse(addDate); dpMonth = new Date(d.getFullYear(), d.getMonth(), 1);
-    renderPicker(); dpPop.hidden = false; addDay.setAttribute('aria-expanded', 'true');
-    (dpPop.querySelector('.dp-day.sel') || dpPop.querySelector('.dp-day:not(:disabled)'))?.focus();
-  }
-  function closePicker(refocus) {
-    if (dpPop.hidden) return;
-    dpPop.hidden = true; addDay.setAttribute('aria-expanded', 'false');
-    if (refocus) addDay.focus();
-  }
-  addDay.addEventListener('click', () => dpPop.hidden ? openPicker() : closePicker(false));
-  dpPop.addEventListener('click', e => {
-    const nav = e.target.closest('[data-nav]');
-    if (nav) { dpMonth = new Date(dpMonth.getFullYear(), dpMonth.getMonth() + Number(nav.dataset.nav), 1); renderPicker(); return; }
-    const day = e.target.closest('.dp-day');
-    if (day && !day.disabled) { setAddDate(day.dataset.date); closePicker(false); addTitle.focus(); }
+  // the day is taken as typed; it only shows as its Monday once the field is left (typing is never overwritten)
+  addDay.addEventListener('input', () => {
+    const v = addDay.value;
+    if (!isDueDay(v)) { addDate = null; dayHint(v ? '' : 'Choisissez un jour.'); return; }
+    if (v < todayIso()) { addDate = null; dayHint('Impossible de placer une tâche dans le passé : choisissez aujourd’hui ou un jour à venir.'); return; }
+    addDate = snapWeekday(v);
+    dayHint(addDate !== v ? 'Le week-end n’est pas affiché : la tâche passera au lundi suivant.' : '');
+    fillRepeat($('#add-repeat'), addDate, undefined, '');
   });
-  dpPop.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePicker(true); return; }
-    const cur = e.target.closest('.dp-day'); if (!cur) return;
-    const step = { ArrowLeft:-1, ArrowRight:1, ArrowUp:-5, ArrowDown:5 }[e.key]; if (!step) return;
-    e.preventDefault();
-    const days = [...dpPop.querySelectorAll('.dp-day')], i = days.indexOf(cur);
-    let j = i + step;
-    while (days[j] && days[j].disabled) j += Math.sign(step);
-    days[j]?.focus();
-  });
-  document.addEventListener('pointerdown', e => { if (!dpPop.hidden && !e.target.closest('.dp')) closePicker(false); });
+  addDay.addEventListener('blur', () => { if (addDate) addDay.value = addDate; });
 
   /* ---------- project picker: dropdown of tags with "Ajouter un tag" (add form + task detail) ---------- */
   function projectPicker(root, { onOpen = () => {}, onDone = () => {} } = {}) {
@@ -1396,7 +1377,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     document.addEventListener('pointerdown', outside);
     return { get: () => value, set, close, isOpen: () => !pop.hidden, destroy: () => document.removeEventListener('pointerdown', outside) };
   }
-  const addPP = projectPicker($('#add-pp'), { onOpen: () => closePicker(false), onDone: () => addTitle.focus() });
+  const addPP = projectPicker($('#add-pp'), { onDone: () => addTitle.focus() });
   const edPP = projectPicker($('#ed-pp'), { onDone: () => { if (editing) { editing.projectId = edPP.get(); commit(); } } });
 
   function renderAddControls() {
@@ -1474,12 +1455,17 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
 
   /* ---------- actions ---------- */
   /* ---------- creation dialog (same look as the detail) ---------- */
-  const creator = $('#creator'), addHint = $('#add-hint');
+  const creator = $('#creator'), addHint = $('#add-hint'), addDue = $('#add-due');
+  // deadline fields: the ✕ that clears the date only shows when there is one
+  const syncDueClear = input => { $(`#${input.id}-clear`).hidden = !input.value; };
+  addDue.addEventListener('input', () => syncDueClear(addDue));
+  $('#add-due-clear').onclick = () => { addDue.value = ''; syncDueClear(addDue); addDue.focus(); };
   const addStateVal = () => addForm.querySelector('input[name="add-state"]:checked')?.value || 'todo';
   function openCreator(date) {
     $('#cr-heading').textContent = 'Nouvelle tâche';
     addTitle.value = '';
     $('#add-note').value = '';
+    addDue.value = ''; syncDueClear(addDue);
     fillRepeat($('#add-repeat'), addDate || anchorDay(), '');
     addForm.querySelector('#add-st-todo').checked = true;
     addHint.hidden = true;
@@ -1500,16 +1486,17 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   $('#add-open').onclick = () => openCreator();
   $('#cr-close').onclick = () => creator.close();
   creator.addEventListener('click', e => { if (e.target === creator) creator.close(); });
-  creator.addEventListener('close', () => { closePicker(false); addPP.close(false); });
+  creator.addEventListener('close', () => addPP.close(false));
 
   addForm.addEventListener('submit', e => {
     e.preventDefault();
     const title = addTitle.value.trim();
     if (!title) { addTitle.focus(); return; }
-    if (!addDate || addDate < todayIso()) { setAddDate(anchorDay()); return; }
+    if (!addDate || addDate < todayIso()) { if (!addDayHint.textContent || addDayHint.hidden) dayHint('Choisissez un jour.'); addDay.focus(); return; }
     const p = proj(addPP.get());
     const t = { id:uid(), title, projectId:p ? p.id : null, state:'todo', date:addDate, created:Date.now(), createdAt:Date.now() };
     const note = $('#add-note').value.trim(); if (note) t.note = note;
+    if (isDueDay(addDue.value)) t.due = addDue.value;
     applyState(t, addStateVal()); // "En cours" lands on today whatever day was picked
     setRepeat(t, $('#add-repeat').value);
     db.tasks.push(t); reveal(t); ui.flash = t.id; save(); creator.close(); render();
@@ -1587,8 +1574,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     if (btn.dataset.act === 'back') { setState(t, 'todo'); return; }
     if (btn.dataset.act === 'del') { deleteTask(t); return; }
     if (btn.dataset.act === 'follow') { openFollowUp(t); return; }
-    // Desktop: a click right on the title text edits it in place (not for finished tasks)
-    if (btn.dataset.act === 'detail' && e.target.closest('.t') && t.state !== 'done' && finePointer.matches) {
+    // Desktop: a click right on the title text edits it in place (not for finished tasks).
+    // Phone layout or a tap with the finger: always the detail
+    const canInline = finePointer.matches && !mqPhone.matches && e.pointerType !== 'touch';
+    if (btn.dataset.act === 'detail' && e.target.closest('.t') && t.state !== 'done' && canInline) {
       inlineEdit(btn.closest('.task'), t, e.clientX, e.clientY); return;
     }
     if (btn.dataset.act === 'detail') { openEditor(t); return; }   // clicking the task opens its detail
@@ -1766,6 +1755,11 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const rows = [];
     const created = t.createdAt || (t.created > 1e12 ? t.created : null);
     rows.push(['Créée', created ? `${stamp(created)}<span class="rel">${daysAgo(created)}</span>` : 'Date inconnue']);
+    if (t.due) {
+      const n = dayDiff(t.due, todayIso()), day = fmtDate.format(parse(t.due));
+      rows.push(['Deadline', isLate(t) ? `<span class="big late">${-n} jour${n < -1 ? 's' : ''} de retard</span>${day}`
+        : t.state === 'done' ? day : `${day}<span class="rel">${n === 0 ? 'aujourd’hui' : n === 1 ? 'demain' : n > 0 ? `dans ${n} j` : `il y a ${-n} j`}</span>`]);
+    }
     if (t.state === 'waiting') {
       const n = waitDays(t), since = t.waitingSince || t.date;
       rows.push(['En attente', `<span class="big${n >= 5 ? ' stale' : ''}">${n} jour${n > 1 ? 's' : ''}</span>depuis le ${fmtDate.format(parse(since))}`]);
@@ -1795,6 +1789,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     if (typing !== edTitle) edTitle.value = t.title;
     if (typing !== $('#ed-note')) $('#ed-note').value = t.note || '';
     if (typing !== edDate) edDate.value = shownDate(t);
+    if (typing !== edDue) { edDue.value = t.due || ''; syncDueClear(edDue); }
     edForm.querySelectorAll('input[name="ed-state"]').forEach(r => { r.checked = r.value === t.state; });
     edPP.set(t.projectId);
     syncDateField(); renderInfo(t);
@@ -1806,6 +1801,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     edForm.querySelectorAll('input[name="ed-state"]').forEach(r => { r.checked = r.value === t.state; }); 
     edPP.set(t.projectId);
     edDate.value = shownDate(t);
+    edDue.value = t.due || ''; syncDueClear(edDue);
     edHint.hidden = true;
     syncDateField();
     fillRepeat($('#ed-repeat'), shownDate(t), repeatKey(serie(t.seriesId)));
@@ -1858,6 +1854,17 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     moveTo(editing, d); commit();
     if (!weekDates().includes(shownDate(editing))) toast(`Déplacée au ${fmtLong.format(parse(d))}`, 'Voir', () => { editor.close(); goTo(d); });
   });
+  // deadline: any date; saved once complete (an empty field removes it)
+  function setDue(v) {
+    if (!editing) return;
+    syncDueClear(edDue);
+    if (v && !isDueDay(v)) return;
+    if ((editing.due || '') === v) return;
+    if (v) editing.due = v; else delete editing.due;
+    commit();
+  }
+  edDue.addEventListener('input', () => setDue(edDue.value));
+  $('#ed-due-clear').onclick = () => { edDue.value = ''; setDue(''); edDue.focus(); };
   $('#ed-close').onclick = () => editor.close();
   edForm.addEventListener('submit', e => { e.preventDefault(); editor.close(); });
   $('#ed-follow').onclick = () => { const t = editing; if (!t) return; editor.close(); openFollowUp(t); };
@@ -2052,7 +2059,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       tags: db.projects.filter(p => scope === 'all' || used.has(p.id)).map(p => ({ id:p.id, name:p.name, hue:p.hue })),
       tasks: tasks.map(t => ({
         id:t.id, title:t.title, state:t.state, stateLabel:STATES[t.state],
-        date:shownDate(t), tagId:t.projectId || null, tag:proj(t.projectId)?.name || null, note:t.note || null,
+        date:shownDate(t), tagId:t.projectId || null, tag:proj(t.projectId)?.name || null, note:t.note || null, due:t.due || null,
         seriesId:t.seriesId || null, occ:t.occ || null,
         createdAt:isoTime(t.createdAt || (t.created > 1e12 ? t.created : null)),
         doingSince: t.state === 'doing' ? isoTime(t.doingAt) : null,
@@ -2060,7 +2067,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         doneAt: t.state === 'done' ? isoTime(t.doneAt) : null
       })),
       series: db.series.filter(s => scope === 'all' || tasks.some(t => t.seriesId === s.id))
-        .map(s => ({ id:s.id, every:s.every, unit:s.unit, start:s.start, last:s.last, title:s.tpl.title, tagId:s.tpl.projectId || null, note:s.tpl.note || null }))
+        .map(s => ({ id:s.id, every:s.every, unit:s.unit, start:s.start, last:s.last, title:s.tpl.title, tagId:s.tpl.projectId || null, note:s.tpl.note || null, dueIn:s.tpl.dueIn ?? null }))
     }, null, 2);
   }
   const EX_ERR = { declined:'Export annulé.', rate_limited:'Une demande d’enregistrement est déjà ouverte : répondez-y, puis réessayez.', too_large:'Le fichier est trop volumineux pour être enregistré ici.' };
@@ -2111,7 +2118,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       const title = str(t?.title, 160); if (!title) return null;
       const state = STATES[t.state] ? t.state : 'todo';
       return { id:str(t.id, 60), title, state, date:isDay(t.date) ? snapWeekday(t.date) : anchorDay(),
-        tagId:str(t.tagId ?? t.projectId, 60), tag:str(t.tag, 40), note:noteStr(t.note),
+        tagId:str(t.tagId ?? t.projectId, 60), tag:str(t.tag, 40), note:noteStr(t.note), due:isDueDay(t.due) ? t.due : null,
         createdAt:toMs(t.createdAt), doingAt:toMs(t.doingSince ?? t.doingAt), doneAt:toMs(t.doneAt),
         waitingSince:isDay(t.waitingSince) ? t.waitingSince : null,
         seriesId:str(t.seriesId, 60), occ:isDay(t.occ) ? t.occ : null };
@@ -2120,7 +2127,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const series = (Array.isArray(j?.series) ? j.series : []).map(r => ({
       id:str(r?.id, 60), every:Math.min(12, Math.max(1, parseInt(r?.every, 10) || 1)), unit:['month', 'first', 'last'].includes(r?.unit) ? r.unit : 'week',
       start:isDay(r?.start) ? r.start : null, last:isDay(r?.last) ? r.last : null,
-      title:str(r?.title, 160), tagId:str(r?.tagId, 60), note:noteStr(r?.note)
+      title:str(r?.title, 160), tagId:str(r?.tagId, 60), note:noteStr(r?.note), dueIn:Number.isInteger(r?.dueIn) ? r.dueIn : null
     })).filter(r => r.id && r.start && r.title);
     return { tags, tasks, series };
   }
@@ -2175,7 +2182,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     // rules: an unknown one is added (a rule already here is kept as it is)
     (imData.series || []).forEach(r => {
       if (serie(r.id)) return;
-      db.series.push({ id:r.id, every:r.every, unit:r.unit, start:r.start, last:r.last || r.start, tpl:{ title:r.title, projectId:tagFor(r.tagId, null), note:r.note } });
+      db.series.push({ id:r.id, every:r.every, unit:r.unit, start:r.start, last:r.last || r.start, tpl:{ title:r.title, projectId:tagFor(r.tagId, null), note:r.note, ...(r.dueIn != null ? { dueIn:r.dueIn } : {}) } });
     });
     const ids = new Set(db.tasks.map(t => t.id)); let added = 0, skipped = 0;
     imData.tasks.forEach(t => {
@@ -2183,6 +2190,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       const id = t.id || uid(); ids.add(id);
       const x = { id, title:t.title, projectId:tagFor(t.tagId, t.tag), state:t.state, date:t.date, created:Date.now() + added, createdAt:t.createdAt || Date.now() };
       if (t.note) x.note = t.note;
+      if (t.due) x.due = t.due;
       const sr = t.seriesId && t.occ && serie(t.seriesId);
       if (sr) { x.seriesId = sr.id; x.occ = t.occ; if (t.occ > sr.last) sr.last = t.occ; }
       if (t.state === 'doing') x.doingAt = t.doingAt || Date.now();
@@ -2244,7 +2252,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
 
   /* shortcuts */
   document.addEventListener('keydown', e => {
-    if (editor.open || creator.open || tagMgr.open || exporter.open || importer.open || $('#help').open || !appMenu.hidden || !menu.hidden || !dpPop.hidden || addPP.isOpen() || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input,select,textarea')) return;
+    if (editor.open || creator.open || tagMgr.open || exporter.open || importer.open || $('#help').open || !appMenu.hidden || !menu.hidden || addPP.isOpen() || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input,select,textarea')) return;
     if (e.key === 'a' || e.key === 'A') { e.preventDefault(); openCreator(); }
     else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); moveTaskFocus(e.key === 'ArrowDown' ? 1 : -1); }
     else if (e.key === 'ArrowLeft') { if (!moveTaskColumn(-1)) $('#prev').click(); }
