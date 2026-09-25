@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><!-- Ancrage: the header's anchor, light on a dark rounded square -->
+  <rect width="32" height="32" rx="7" fill="#141413"/>
+  <g transform="translate(2 2.15)" fill="none" stroke="#faf9f5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="14" cy="5.5" r="2.8"/>
+    <path d="M14 8.3V25"/>
+    <path d="M8.5 12.5h11"/>
+    <path d="M4 16.5c.8 5.2 5 8.5 10 8.5s9.2-3.3 10-8.5"/>
+    <path d="M4 16.5l-1.6 2.6M4 16.5l3 .4M24 16.5l1.6 2.6M24 16.5l-3 .4"/>
+  </g>
+</svg>
