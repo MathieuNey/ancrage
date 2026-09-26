@@ -17,7 +17,7 @@ L'application tient dans un seul fichier : [`ancrage.html`](ancrage.html).
   puis ouvrir http://localhost:8766.
 - **Comme application** (Chrome, Edge) : depuis http://localhost:8766 ou un hébergement en `https://`, menu du navigateur → « Installer Ancrage ». Le manifeste et les icônes sont dans `manifest.webmanifest` et `icons/`.
 
-Publier une nouvelle version (config dans `firebase.json` et `.firebaserc`) :
+Publier une nouvelle version (config dans `firebase.json` et `.firebaserc`) : automatique à chaque push sur `main`, merge d'une pull request compris (GitHub Actions, [`.github/workflows/firebase-hosting-merge.yml`](.github/workflows/firebase-hosting-merge.yml), secret `FIREBASE_SERVICE_ACCOUNT_ANCRAGE_8E7E5`). Le workflow peut aussi être relancé depuis l'onglet Actions. À la main :
 
 ```bash
 firebase deploy --only hosting

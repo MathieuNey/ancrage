@@ -1,0 +1,29 @@
+# Publie l'application sur Firebase Hosting (https://ancrage-8e7e5.web.app) à chaque push sur main,
+# merge d'une pull request compris. Relançable à la main depuis l'onglet Actions.
+# Le secret FIREBASE_SERVICE_ACCOUNT_ANCRAGE_8E7E5 (clé du compte de service Firebase) est créé par
+# `firebase init hosting:github`.
+name: Publication Firebase
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['README.md', '.claude/**'] # rien à publier : ces fichiers sont exclus par firebase.json
+  workflow_dispatch:
+
+concurrency: # une publication à la fois, dans l'ordre des pushs
+  group: firebase-hosting-live
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANCRAGE_8E7E5 }}
+          projectId: ancrage-8e7e5
+          channelId: live

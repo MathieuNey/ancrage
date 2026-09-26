@@ -1,10 +1,39 @@
 {
   "hosting": {
     "public": ".",
-    "ignore": ["firebase.json", "README.md", ".firebaserc", ".git", ".git/**", ".claude", ".claude/**", ".firebase", ".firebase/**", ".gitignore", "**/.*", "**/node_modules/**"],
-    "redirects": [{ "source": "/", "destination": "/ancrage.html", "type": 302 }],
+    "ignore": [
+      "firebase.json",
+      "README.md",
+      ".firebaserc",
+      ".git",
+      ".git/**",
+      ".claude",
+      ".claude/**",
+      ".github",
+      ".github/**",
+      ".firebase",
+      ".firebase/**",
+      ".gitignore",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "redirects": [
+      {
+        "source": "/",
+        "destination": "/ancrage.html",
+        "type": 302
+      }
+    ],
     "headers": [
-      { "source": "**/*.@(html|js|webmanifest)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+      {
+        "source": "**/*.@(html|js|webmanifest)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      }
     ]
   }
 }
