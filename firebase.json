@@ -1,0 +1,10 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": ["firebase.json", "README.md", ".firebaserc", ".git", ".git/**", ".claude", ".claude/**", "**/.*", "**/node_modules/**"],
+    "redirects": [{ "source": "/", "destination": "/ancrage.html", "type": 302 }],
+    "headers": [
+      { "source": "**/*.@(html|js|webmanifest)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    ]
+  }
+}
