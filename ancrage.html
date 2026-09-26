@@ -791,7 +791,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         <dt>Jours passés</dt><dd>tâches terminées uniquement</dd>
         <dt>Relance</dt><dd>crée une tâche à faire</dd>
         <dt>Deadline dépassée</dt><dd>pastille rouge, tant que la tâche n’est pas terminée</dd>
-        <dt>Tâche récurrente</dt><dd>la suivante apparaît une fois celle-ci terminée</dd>
+        <dt>Tâche récurrente</dt><dd>la suivante apparaît une fois celle-ci terminée ; deadline fixée à son jour prévu</dd>
         <dt>Tags anciens</dt><dd>plus utilisés aujourd’hui ni après</dd>
         <dt>Week-end</dt><dd>masqué, sauf avec « Afficher le week-end » (menu ⋯) ; masqué, ses tâches passent au lundi, qui tient lieu d’aujourd’hui le samedi et le dimanche</dd>
       </dl>
@@ -945,6 +945,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       const d = JSON.parse(localStorage.getItem(KEY));
       if (d && Array.isArray(d.tasks) && Array.isArray(d.projects)) {
         if (!Array.isArray(d.series)) d.series = []; // saved before recurring tasks existed
+        d.tasks.forEach(t => { if (t.seriesId && t.state !== 'done' && !t.due) t.due = t.date; }); // open occurrences saved before they had a fixed deadline
         if (d.sample) d.tasks.forEach(fakeDates); // examples saved before dates existed
         const noStart = d.tasks.filter(t => t.state === 'doing' && !t.doingAt); // start unknown: the day counter starts now (saved, so it grows)
         if (noStart.length) { noStart.forEach(t => { t.doingAt = Date.now(); }); try { localStorage.setItem(KEY, JSON.stringify(d)); } catch {} }
@@ -959,10 +960,9 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     return seed();
   }
   const save = () => {
-    db.series.forEach(s => { // template = latest occurrence (its deadline kept as a gap in days from its planned date)
+    db.series.forEach(s => { // template = latest occurrence
       const l = latestOcc(s); if (!l) return;
       s.tpl = { title:l.title, projectId:l.projectId, note:l.note || '' };
-      if (l.due) s.tpl.dueIn = dayDiff(l.due, l.occ);
     });
     const used = new Set([...db.tasks.map(t => t.projectId), ...db.series.map(s => s.tpl.projectId)]);
     db.projects = db.projects.filter(p => p.saved || used.has(p.id)); // tags added from the list are kept even without tasks
@@ -1138,8 +1138,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       const src = latestOcc(s) || s.tpl;
       const t = { id:uid(), title:src.title, projectId:proj(src.projectId) ? src.projectId : null, state:'todo', date:occDay(occ), created:Date.now(), createdAt:Date.now(), seriesId:s.id, occ };
       if (src.note) t.note = src.note;
-      const dueIn = src.due && src.occ ? dayDiff(src.due, src.occ) : src.dueIn; // same gap between planned date and deadline
-      if (Number.isInteger(dueIn)) t.due = iso(addDays(parse(occ), dueIn));
+      t.due = t.date; // an occurrence is due the day it is planned on
       db.tasks.push(t); s.last = occ; added = true;
     });
     return added;
@@ -1160,16 +1159,12 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     if (s) {
       Object.assign(s, { every:r.every, unit:r.unit, start:t.occ });
       const nx = seriesTasks(s).find(x => x.occ > t.occ && x.state === 'todo'); // already created on the old rhythm: moved to the new one
-      if (nx) {
-        const dueIn = nx.due ? dayDiff(nx.due, nx.occ) : null;
-        nx.occ = nextOcc(s, t.occ) || nx.occ; nx.date = occDay(nx.occ); s.last = nx.occ;
-        if (dueIn != null) nx.due = iso(addDays(parse(nx.occ), dueIn));
-      }
+      if (nx) { nx.occ = nextOcc(s, t.occ) || nx.occ; nx.date = nx.due = occDay(nx.occ); s.last = nx.occ; }
       return;
     }
     const start = t.state === 'done' ? t.date : shownDate(t);
-    const ns = { id:uid(), every:r.every, unit:r.unit, start, last:start, tpl:{ title:t.title, projectId:t.projectId, note:t.note || '', ...(t.due ? { dueIn:dayDiff(t.due, start) } : {}) } };
-    db.series.push(ns); t.seriesId = ns.id; t.occ = start;
+    const ns = { id:uid(), every:r.every, unit:r.unit, start, last:start, tpl:{ title:t.title, projectId:t.projectId, note:t.note || '' } };
+    db.series.push(ns); t.seriesId = ns.id; t.occ = start; t.due = start; // the deadline of a recurring task is its day, not editable
   }
   // choices of a "Répéter" list for a task on `day`: "premier / dernier jour hors week-end" only when the day is one,
   // or when it is the rule already in place (`keep`); the current choice is kept when still offered
@@ -1346,6 +1341,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     addDate = d < todayIso() ? anchorDay() : snapDay(d);
     addDay.value = addDate; addDay.min = todayIso(); dayHint('');
     fillRepeat($('#add-repeat'), addDate, undefined, ''); // a new task has no rule to keep
+    if ($('#add-due').disabled) syncAddDue(); // locked on the day: follows it
   }
   // the day is taken as typed; it only shows as its Monday once the field is left (typing is never overwritten)
   addDay.addEventListener('input', () => {
@@ -1355,6 +1351,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     addDate = snapDay(v);
     dayHint(addDate !== v ? WE_HINT : '');
     fillRepeat($('#add-repeat'), addDate, undefined, '');
+    if ($('#add-due').disabled) syncAddDue();
   });
   addDay.addEventListener('blur', () => { if (addDate) addDay.value = addDate; });
 
@@ -1505,7 +1502,18 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   /* ---------- creation dialog (same look as the detail) ---------- */
   const creator = $('#creator'), addHint = $('#add-hint'), addDue = $('#add-due');
   // deadline fields: the ✕ that clears the date only shows when there is one
-  const syncDueClear = input => { $(`#${input.id}-clear`).hidden = !input.value; };
+  const syncDueClear = input => { $(`#${input.id}-clear`).hidden = !input.value || input.disabled; };
+  // a recurring task is due the day it is planned on: the field is locked on that day (the typed date comes back without a rule)
+  const REP_DUE = 'Tâche récurrente : la deadline est le jour prévu.';
+  let addDueTyped = '';
+  function syncAddDue() {
+    const rep = !!$('#add-repeat').value;
+    if (rep && !addDue.disabled) addDueTyped = addDue.value;
+    addDue.value = rep ? (TODAY_ONLY[addStateVal()] ? anchorDay() : addDate || '') : addDue.disabled ? addDueTyped : addDue.value;
+    addDue.disabled = rep; addDue.title = rep ? REP_DUE : '';
+    syncDueClear(addDue);
+  }
+  $('#add-repeat').addEventListener('change', syncAddDue);
   addDue.addEventListener('input', () => syncDueClear(addDue));
   $('#add-due-clear').onclick = () => { addDue.value = ''; syncDueClear(addDue); addDue.focus(); };
   const addStateVal = () => addForm.querySelector('input[name="add-state"]:checked')?.value || 'todo';
@@ -1513,7 +1521,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     $('#cr-heading').textContent = 'Nouvelle tâche';
     addTitle.value = '';
     $('#add-note').value = '';
-    addDue.value = ''; syncDueClear(addDue);
+    addDue.value = ''; addDue.disabled = false; addDue.title = ''; syncDueClear(addDue);
     fillRepeat($('#add-repeat'), addDate || anchorDay(), '');
     addForm.querySelector('#add-st-todo').checked = true;
     addHint.hidden = true;
@@ -1530,7 +1538,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     addPP.set(t.projectId);
     addTitle.setSelectionRange(addTitle.value.length, addTitle.value.length);
   }
-  addForm.querySelectorAll('input[name="add-state"]').forEach(r => r.addEventListener('change', () => { addHint.hidden = addStateVal() === 'todo'; }));
+  addForm.querySelectorAll('input[name="add-state"]').forEach(r => r.addEventListener('change', () => { addHint.hidden = addStateVal() === 'todo'; if (addDue.disabled) syncAddDue(); }));
   $('#add-open').onclick = () => openCreator();
   $('#cr-close').onclick = () => creator.close();
   creator.addEventListener('click', e => { if (e.target === creator) creator.close(); });
@@ -1837,7 +1845,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     if (typing !== edTitle) edTitle.value = t.title;
     if (typing !== $('#ed-note')) $('#ed-note').value = t.note || '';
     if (typing !== edDate) edDate.value = shownDate(t);
-    if (typing !== edDue) { edDue.value = t.due || ''; syncDueClear(edDue); }
+    if (typing !== edDue) syncEdDue(t);
     edForm.querySelectorAll('input[name="ed-state"]').forEach(r => { r.checked = r.value === t.state; });
     edPP.set(t.projectId);
     syncDateField(); renderInfo(t);
@@ -1849,7 +1857,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     edForm.querySelectorAll('input[name="ed-state"]').forEach(r => { r.checked = r.value === t.state; }); 
     edPP.set(t.projectId);
     edDate.value = shownDate(t);
-    edDue.value = t.due || ''; syncDueClear(edDue);
+    syncEdDue(t);
     edHint.hidden = true;
     syncDateField();
     fillRepeat($('#ed-repeat'), shownDate(t), repeatKey(serie(t.seriesId)));
@@ -1880,7 +1888,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const v = edTitle.value.trim();
     if (editing && v) { editing.title = v; commit(); }
   });
-  $('#ed-repeat').addEventListener('change', e => { if (editing) { setRepeat(editing, e.target.value); commit(); } });
+  $('#ed-repeat').addEventListener('change', e => { if (editing) { setRepeat(editing, e.target.value); syncEdDue(editing); commit(); } });
   $('#ed-note').addEventListener('input', e => {
     if (!editing) return;
     const v = e.target.value.trim();
@@ -1902,7 +1910,11 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     moveTo(editing, d); commit();
     if (!weekDates().includes(shownDate(editing))) toast(`Déplacée au ${fmtLong.format(parse(d))}`, 'Voir', () => { editor.close(); goTo(d); });
   });
-  // deadline: any date; saved once complete (an empty field removes it)
+  // deadline: any date; saved once complete (an empty field removes it). Locked on a recurring task (see REP_DUE)
+  function syncEdDue(t) {
+    edDue.value = t.due || ''; edDue.disabled = !!t.seriesId; edDue.title = t.seriesId ? REP_DUE : '';
+    syncDueClear(edDue);
+  }
   function setDue(v) {
     if (!editing) return;
     syncDueClear(edDue);
