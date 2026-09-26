@@ -28,6 +28,7 @@ Les tâches sont enregistrées dans le stockage local du navigateur. Pour les sa
 ## Fonctionnalités
 
 - Vues Adaptatif (autour d'aujourd'hui) et Semaine (lundi–vendredi)
+- Réglage « Afficher le week-end » (menu ⋯) : samedi et dimanche dans les deux vues, comme les autres jours. Désactivé, les tâches datées d'un week-end gardent leur date et s'affichent le lundi suivant
 - États : à faire, en cours, en attente, terminé ; compteurs de jours
 - Deadline sur une tâche (n'importe quelle date), pastille rouge en cas de retard
 - Mode focus sur aujourd'hui, barre de progression, carte « Journée bouclée » quand tout est terminé

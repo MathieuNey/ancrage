@@ -173,6 +173,22 @@ dialog{overflow:visible}
 .day-head .ddate{margin-left:auto}
 .dname{font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:-.015em;line-height:1.1}
 .day.is-past .dname{color:var(--ink-2)}
+.day.is-weekend:not(.is-today):not(.drop){background:color-mix(in oklab,var(--surface) 55%,var(--bg))} /* shown weekend: a column set back from the week */
+@media (max-width:1180px){ .grid{--we:1fr} } /* shown weekend: narrower than the other days only when there is room */
+.day{container-type:inline-size}
+/* narrow column (seven days on a small screen): the date goes on its own line under the day's name, the buttons stay on the right */
+@container (max-width:170px){
+  .day-head{flex-wrap:wrap;row-gap:0}
+  .day-head::after{content:'';order:1;flex-basis:100%}
+  .day-head .ddate{order:2;margin:2px 0 0}
+  .day-head .ddate + *{margin-left:auto}
+}
+@container (max-width:300px){
+  .day.is-today .day-head{flex-wrap:wrap;row-gap:0}
+  .day.is-today .day-head::after{content:'';order:1;flex-basis:100%}
+  .day.is-today .ddate{order:2;margin:4px 0 0}
+  .day.is-today .ddate + *{margin-left:auto}
+}
 .day.is-past .hue{--cm:0 !important} /* past days in black & white: drop project chroma, overrides inline --cm */
 .ddate{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
 .day.is-today .ddate{background:var(--ink);color:var(--surface);border-radius:5px;padding:1px 6px}
@@ -709,6 +725,8 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   <hr>
   <button type="button" role="menuitemcheckbox" data-act="theme" aria-checked="false">
     <svg class="mi-svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 9.6A5.5 5.5 0 0 1 6.4 2.8a5.5 5.5 0 1 0 6.8 6.8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>Mode sombre<span class="mi-check" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7.2l2.6 2.6L11 4.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+  <button type="button" role="menuitemcheckbox" data-act="weekend" aria-checked="false">
+    <svg class="mi-svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="8.6" y="8.6" width="3.2" height="3.2" rx=".8" fill="currentColor"/></svg>Afficher le week-end<span class="mi-check" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7.2l2.6 2.6L11 4.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
 </div>
 
 <dialog id="exporter" aria-labelledby="ex-heading">
@@ -775,6 +793,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         <dt>Deadline dépassée</dt><dd>pastille rouge, tant que la tâche n’est pas terminée</dd>
         <dt>Tâche récurrente</dt><dd>la suivante apparaît une fois celle-ci terminée</dd>
         <dt>Tags anciens</dt><dd>plus utilisés aujourd’hui ni après</dd>
+        <dt>Week-end</dt><dd>masqué, sauf avec « Afficher le week-end » (menu ⋯) ; masqué, ses tâches passent au lundi</dd>
       </dl>
     </section>
   </div>
@@ -832,7 +851,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   const STATES = { doing:'En cours', todo:'À faire', waiting:'En attente', done:'Terminé' };
   const ORDER = { doing:0, todo:1, waiting:2, done:3 };
   const HUES = [255, 28, 155, 320, 75, 200, 0, 115, 285, 50];
-  const DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
+  const DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  // "Afficher le week-end" (menu ⋯, remembered in this browser). Off: Saturday and Sunday are left out of the views, of "today"
+  // and of new dates; a task already dated on a weekend keeps its date and shows on the Monday after
+  let showWe = false; try { showWe = localStorage.getItem(KEY + '.weekend') === '1'; } catch {}
   const FILTER_MAX = 6; // tag chips shown in the filter row before "+N"
   const RING = '<circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.7"/>';
   const ICON = {
@@ -857,9 +879,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   const fmtLong = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'short' });
   const fmtDue = new Intl.DateTimeFormat('fr-FR', { weekday:'short', day:'numeric', month:'short' });
   const todayIso = () => iso(new Date());
-  const defaultWeek = () => { const t = new Date(), wd = t.getDay(); return monday(wd === 0 || wd === 6 ? addDays(t, 2) : t); };
+  const defaultWeek = () => { const t = new Date(), wd = t.getDay(); return monday(!showWe && (wd === 0 || wd === 6) ? addDays(t, 2) : t); };
   const dayDiff = (a, b) => Math.round((parse(a) - parse(b)) / 864e5); // a − b, in days
   const snapWeekday = s => { const d = parse(s), wd = d.getDay(); return wd === 6 ? iso(addDays(d, 2)) : wd === 0 ? iso(addDays(d, 1)) : s; };
+  const snapDay = s => showWe ? s : snapWeekday(s); // a day on screen: a weekend one goes to the Monday after while the weekend is hidden
 
   /* ---------- data ---------- */
   const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
@@ -1017,15 +1040,15 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   const fkey = t => t.projectId || 'none';
   const passes = t => ui.filter.size === 0 || ui.filter.has(fkey(t));
   const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
-  const stepWeekday = (d, dir) => { let x = addDays(d, dir); while (isWeekend(x)) x = addDays(x, dir); return x; };
+  const stepWeekday = (d, dir) => { let x = addDays(d, dir); while (!showWe && isWeekend(x)) x = addDays(x, dir); return x; }; // next day on screen
   const dayName = s => DAYS[(parse(s).getDay() + 6) % 7];
-  // Dates on screen: "Adaptatif" = a focus day (today shifted by ui.roll weekdays) with a span that depends on the screen:
-  //   < 900 px: focus + 3 ahead · ≥ 900 px: 1 back + focus + 3 ahead. "Semaine" is Mon–Fri of ui.week
+  // Dates on screen: "Adaptatif" = a focus day (today shifted by ui.roll days on screen) with a span that depends on the screen:
+  //   < 900 px: focus + 3 ahead · ≥ 900 px: 1 back + focus + 3 ahead. "Semaine" is Mon–Fri of ui.week (Mon–Sun with the weekend shown)
   const mqSmall = matchMedia("(max-width: 899.98px)");
   const mqPhone = matchMedia("(max-width: 599.98px)"); // phone layout: tags in one scrolling row (no "+N"), floating add button
   const span = () => mqSmall.matches ? { back:0, ahead:3 } : { back:1, ahead:3 };
   const weekDates = () => {
-    if (ui.view === 'week') return DAYS.map((_, i) => iso(addDays(ui.week, i)));
+    if (ui.view === 'week') return DAYS.slice(0, showWe ? 7 : 5).map((_, i) => iso(addDays(ui.week, i)));
     let a = parse(anchorDay()); for (let i = 0; i < Math.abs(ui.roll); i++) a = stepWeekday(a, Math.sign(ui.roll));
     const { back, ahead } = span(), out = [];
     let b = a; for (let i = 0; i < back; i++) { b = stepWeekday(b, -1); out.unshift(iso(b)); }
@@ -1034,11 +1057,11 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     return out;
   };
 
-  // "En cours" and "En attente" only ever live on today (next Monday on weekends); to-dos roll over from the past
-  const anchorDay = () => snapWeekday(todayIso());
+  // "En cours" and "En attente" only ever live on today (next Monday on weekends, while hidden); to-dos roll over from the past
+  const anchorDay = () => snapDay(todayIso());
   const CARRIED = { todo:true };
   const TODAY_ONLY = { doing:true, waiting:true };
-  const shownDate = t => TODAY_ONLY[t.state] ? anchorDay() : CARRIED[t.state] && t.date <= anchorDay() ? anchorDay() : t.date;
+  const shownDate = t => TODAY_ONLY[t.state] ? anchorDay() : CARRIED[t.state] && t.date <= anchorDay() ? anchorDay() : snapDay(t.date);
   const waitDays = t => Math.max(0, Math.round((parse(todayIso()) - parse(t.waitingSince || t.date)) / 864e5));
   const doingDays = t => t.doingAt ? Math.max(0, Math.round((parse(todayIso()) - parse(iso(new Date(t.doingAt)))) / 864e5)) : 0;
   // Deadline (t.due): any date, weekends and past included. Past for a task still open (to do, in progress, waiting) = late
@@ -1095,10 +1118,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const m = new Date(d.getFullYear(), d.getMonth() + s.every * k, 1);
     return iso(new Date(m.getFullYear(), m.getMonth(), Math.min(d.getDate(), new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate())));
   }
-  // day an occurrence is placed on: a weekend date moves back to the Friday before
+  // day an occurrence is placed on: while the weekend is hidden, a weekend date moves back to the Friday before
   // (unless that Friday is already past, i.e. the occurrence falls this weekend: then the coming Monday)
   function occDay(o) {
-    const d = parse(o), wd = d.getDay(), f = wd === 6 ? iso(addDays(d, -1)) : wd === 0 ? iso(addDays(d, -2)) : o;
+    const d = parse(o), wd = showWe ? -1 : d.getDay(), f = wd === 6 ? iso(addDays(d, -1)) : wd === 0 ? iso(addDays(d, -2)) : o;
     return f < anchorDay() ? anchorDay() : f;
   }
   function nextOcc(s, after) {
@@ -1280,7 +1303,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
 
   function renderGrid() {
     const today = todayIso(), dates = weekDates();
-    grid.style.setProperty('--cols', dates.map(d => d === today ? 'minmax(0,2.4fr)' : 'minmax(0,1fr)').join(' ')); // today ≈ 37 % of the row
+    grid.style.setProperty('--cols', dates.map(d => d === today ? 'minmax(0,2.4fr)' : isWeekend(parse(d)) ? 'minmax(0,var(--we,.75fr))' : 'minmax(0,1fr)').join(' ')); // today ≈ 37 % of the row; weekend days (when shown) a little narrower
     grid.classList.toggle('has-today', dates.includes(today));
     const mine = db.tasks.filter(t => shownDate(t) === today), cnt = s => mine.filter(t => t.state === s).length;
     const isFin = !cnt('todo') && !cnt('doing') && cnt('done') > 0;
@@ -1298,7 +1321,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       const caption = !segs.length ? (all.length ? 'Rien à traiter' : 'Aucune tâche')
         : !(c.doing + c.todo) ? `Tout est bouclé · ${n('done', 'terminée', 'terminées')}`
         : [c.done && n('done', 'terminée', 'terminées'), c.doing && n('doing', 'en cours', 'en cours'), c.todo && n('todo', 'à faire', 'à faire')].filter(Boolean).join(' · ');
-      const cls = (date === today ? ' is-today' : date < today ? ' is-past' : '') + (ui.focus && date === anchorDay() ? ' focus-day' : '');
+      const cls = (date === today ? ' is-today' : date < today ? ' is-past' : '') + (isWeekend(parse(date)) ? ' is-weekend' : '') + (ui.focus && date === anchorDay() ? ' focus-day' : '');
       const dn = dayName(date);
       return `<section class="day${cls}" data-date="${date}" aria-label="${dn} ${fmtShort.format(parse(date))}">
         <header class="day-head"><span class="dname">${dn}</span><span class="ddate">${fmtShort.format(parse(date))}</span>${date === anchorDay() /* focus toggle: on today (next Monday on weekends) */
@@ -1312,14 +1335,15 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     ui.flash = null;
   }
 
-  /* ---------- add-form day: native date field (today or later; a weekend day goes to the Monday after) ---------- */
+  /* ---------- add-form day: native date field (today or later; a weekend day goes to the Monday after while the weekend is hidden) ---------- */
   let addDate = null;
   const addDayHint = $('#add-day-hint');
   const dayHint = msg => { addDayHint.textContent = msg; addDayHint.hidden = !msg; };
+  const WE_HINT = 'Le week-end n’est pas affiché : la tâche passera au lundi suivant (menu ⋯ → Afficher le week-end).';
   // Default day: first open (today or later) weekday of the displayed week, else today
   const defaultAddDate = () => weekDates().find(d => d >= todayIso()) || anchorDay();
   function setAddDate(d) {
-    addDate = d < todayIso() ? anchorDay() : snapWeekday(d);
+    addDate = d < todayIso() ? anchorDay() : snapDay(d);
     addDay.value = addDate; addDay.min = todayIso(); dayHint('');
     fillRepeat($('#add-repeat'), addDate, undefined, ''); // a new task has no rule to keep
   }
@@ -1328,8 +1352,8 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const v = addDay.value;
     if (!isDueDay(v)) { addDate = null; dayHint(v ? '' : 'Choisissez un jour.'); return; }
     if (v < todayIso()) { addDate = null; dayHint('Impossible de placer une tâche dans le passé : choisissez aujourd’hui ou un jour à venir.'); return; }
-    addDate = snapWeekday(v);
-    dayHint(addDate !== v ? 'Le week-end n’est pas affiché : la tâche passera au lundi suivant.' : '');
+    addDate = snapDay(v);
+    dayHint(addDate !== v ? WE_HINT : '');
     fillRepeat($('#add-repeat'), addDate, undefined, '');
   });
   addDay.addEventListener('blur', () => { if (addDate) addDay.value = addDate; });
@@ -1834,10 +1858,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     $('#ed-close').focus();
   }
   // a finished task may go back in time (it was done that day); any other task can only move to today or later
-  const pastPick = () => edDate.value && editing && editing.state !== 'done' && edDate.value !== editing.date && snapWeekday(edDate.value) < todayIso();
+  const pastPick = () => edDate.value && editing && editing.state !== 'done' && edDate.value !== editing.date && snapDay(edDate.value) < todayIso();
   edDate.addEventListener('input', () => {
     if (pastPick()) { edHint.textContent = 'Impossible de placer une tâche dans le passé : choisissez aujourd’hui ou un jour à venir.'; edHint.hidden = false; }
-    else if (edDate.value && snapWeekday(edDate.value) !== edDate.value) { edHint.textContent = 'Le week-end n’est pas affiché : la tâche passera au lundi suivant.'; edHint.hidden = false; }
+    else if (edDate.value && snapDay(edDate.value) !== edDate.value) { edHint.textContent = WE_HINT; edHint.hidden = false; }
     else edHint.hidden = true;
   });
   // "En cours" is pinned to today: lock the day field while it is selected
@@ -1873,7 +1897,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   }));
   edDate.addEventListener('change', () => {
     if (!editing || !edDate.value || edDate.disabled || pastPick()) return;
-    const d = snapWeekday(edDate.value);
+    const d = snapDay(edDate.value);
     if (d === shownDate(editing)) return;
     moveTo(editing, d); commit();
     if (!weekDates().includes(shownDate(editing))) toast(`Déplacée au ${fmtLong.format(parse(d))}`, 'Voir', () => { editor.close(); goTo(d); });
@@ -2024,6 +2048,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     else if (b.dataset.act === 'import') openImporter();
     else if (b.dataset.act === 'tags') openTagMgr();
     else if (b.dataset.act === 'theme') toggleTheme();
+    else if (b.dataset.act === 'weekend') setWeekend(!showWe);
     else if (b.dataset.act === 'help') { $('#help').showModal(); $('#help-close').focus(); }
   });
   $('#help-btn').onclick = () => { $('#help').showModal(); $('#help-close').focus(); };
@@ -2046,6 +2071,19 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   }
   $('#theme-toggle').onclick = toggleTheme;
   syncTheme();
+
+  /* ---------- weekend shown or hidden: off by default, remembered in this browser; the navigation comes back to today ---------- */
+  function syncWeekend() {
+    appMenu.querySelector('[data-act="weekend"]').setAttribute('aria-checked', String(showWe));
+    $('.views [data-view="week"]').title = showWe ? 'Du lundi au dimanche, semaine par semaine' : 'Du lundi au vendredi, semaine par semaine';
+  }
+  function setWeekend(on, store = true) {
+    showWe = on;
+    if (store) try { localStorage.setItem(KEY + '.weekend', on ? '1' : '0'); } catch {}
+    ui.roll = 0; ui.week = defaultWeek(); addDate = null;
+    syncWeekend(); render();
+  }
+  syncWeekend();
   appMenu.addEventListener('keydown', e => {
     const items = [...appMenu.querySelectorAll('button')].filter(b => b.offsetParent), i = items.indexOf(document.activeElement);
     if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
@@ -2141,7 +2179,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const tasks = rawTasks.map(t => {
       const title = str(t?.title, 160); if (!title) return null;
       const state = STATES[t.state] ? t.state : 'todo';
-      return { id:str(t.id, 60), title, state, date:isDay(t.date) ? snapWeekday(t.date) : anchorDay(),
+      return { id:str(t.id, 60), title, state, date:isDay(t.date) ? t.date : anchorDay(), // a weekend date is kept (shown on the Monday after while the weekend is hidden)
         tagId:str(t.tagId ?? t.projectId, 60), tag:str(t.tag, 40), note:noteStr(t.note), due:isDueDay(t.due) ? t.due : null,
         createdAt:toMs(t.createdAt), doingAt:toMs(t.doingSince ?? t.doingAt), doneAt:toMs(t.doneAt),
         waitingSince:isDay(t.waitingSince) ? t.waitingSince : null,
@@ -2293,6 +2331,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   /* ---------- another tab of Ancrage saved: this tab takes its data, so it never writes an old copy over it ---------- */
   addEventListener('storage', e => {
     if (e.key === KEY + '.theme') { document.documentElement.dataset.theme = e.newValue === 'dark' ? 'dark' : 'light'; syncTheme(); return; }
+    if (e.key === KEY + '.weekend') { if ((e.newValue === '1') !== showWe) setWeekend(e.newValue === '1', false); return; }
     if (e.key !== KEY || !e.newValue) return;
     let d; try { d = JSON.parse(e.newValue); } catch { return; }
     if (!d || !Array.isArray(d.tasks) || !Array.isArray(d.projects)) return;
