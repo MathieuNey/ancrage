@@ -793,7 +793,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         <dt>Deadline dépassée</dt><dd>pastille rouge, tant que la tâche n’est pas terminée</dd>
         <dt>Tâche récurrente</dt><dd>la suivante apparaît une fois celle-ci terminée</dd>
         <dt>Tags anciens</dt><dd>plus utilisés aujourd’hui ni après</dd>
-        <dt>Week-end</dt><dd>masqué, sauf avec « Afficher le week-end » (menu ⋯) ; masqué, ses tâches passent au lundi</dd>
+        <dt>Week-end</dt><dd>masqué, sauf avec « Afficher le week-end » (menu ⋯) ; masqué, ses tâches passent au lundi, qui tient lieu d’aujourd’hui le samedi et le dimanche</dd>
       </dl>
     </section>
   </div>
@@ -1302,7 +1302,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   }
 
   function renderGrid() {
-    const today = todayIso(), dates = weekDates();
+    const today = anchorDay(), dates = weekDates(); // the "today" column: on a weekend with the weekend hidden, the Monday after
     grid.style.setProperty('--cols', dates.map(d => d === today ? 'minmax(0,2.4fr)' : isWeekend(parse(d)) ? 'minmax(0,var(--we,.75fr))' : 'minmax(0,1fr)').join(' ')); // today ≈ 37 % of the row; weekend days (when shown) a little narrower
     grid.classList.toggle('has-today', dates.includes(today));
     const mine = db.tasks.filter(t => shownDate(t) === today), cnt = s => mine.filter(t => t.state === s).length;
