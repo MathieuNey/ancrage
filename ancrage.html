@@ -1413,7 +1413,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     return { get: () => value, set, close, isOpen: () => !pop.hidden, destroy: () => document.removeEventListener('pointerdown', outside) };
   }
   const addPP = projectPicker($('#add-pp'), { onDone: () => addTitle.focus() });
-  const edPP = projectPicker($('#ed-pp'), { onDone: () => { if (editing) { editing.projectId = edPP.get(); commit(); } } });
+  const edPP = projectPicker($('#ed-pp'), { onDone: () => { if (editing) { const id = edPP.get(); if ((editing.projectId || null) !== (id || null)) rememberTag(id); editing.projectId = id; commit(); } } });
 
   function renderAddControls() {
     if (!addDate || addDate < todayIso()) setAddDate(defaultAddDate());
@@ -1442,7 +1442,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   /* ---------- inline quick add at the bottom of today / future columns: title + tag only (always "À faire") ---------- */
   const PLUS = '<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2.5v9M2.5 7h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
   const inlineRow = () => `<li class="inline-add"><button type="button" class="ia-open body" data-act="ia"><span class="st">${PLUS}</span><span class="ia-lbl">Ajouter une tâche</span></button></li>`;
-  // tag of the last task created (detail dialog or inline row, remembered in this browser): the default for the next one
+  // tag last given to a task — created (detail dialog or inline row) or changed in the editor — remembered in this browser: the default for the next one
   let lastTag = null; try { lastTag = localStorage.getItem(KEY + '.tag') || null; } catch {}
   function rememberTag(id) { lastTag = id || null; try { localStorage.setItem(KEY + '.tag', lastTag || ''); } catch {} }
   // a tag filter in force wins over the last tag ("Sans tag" → no tag)
