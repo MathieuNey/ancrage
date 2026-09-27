@@ -389,6 +389,8 @@ dialog{overflow:visible}
 /* Editor dialog */
 dialog{border:1px solid var(--line);border-radius:14px;padding:0;width:min(460px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
 dialog::backdrop{background:rgb(10 14 20 / .45)}
+/* phone (or a short landscape screen): a dialog taller than the screen scrolls inside itself; the tag list then opens within that scroll */
+@media (max-width:599.98px), (max-height:500px){ dialog{max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain} }
 .ed{display:grid;gap:16px;padding:20px}
 .ed h2{margin:0;font-family:var(--f-display);font-size:20px;font-weight:700;letter-spacing:-.015em}
 .field{display:grid;gap:6px}
