@@ -1445,6 +1445,8 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   // tag of the last task created (detail dialog or inline row, remembered in this browser): the default for the next one
   let lastTag = null; try { lastTag = localStorage.getItem(KEY + '.tag') || null; } catch {}
   function rememberTag(id) { lastTag = id || null; try { localStorage.setItem(KEY + '.tag', lastTag || ''); } catch {} }
+  // a tag filter in force wins over the last tag ("Sans tag" → no tag)
+  const defaultTag = () => { const [k] = ui.filter; return k === undefined ? lastTag : k === 'none' ? null : k; };
   let inlineTag = null, inlinePP = null;
   function openInline(focus) {
     const date = ui.inlineDate;
@@ -1524,7 +1526,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     addForm.querySelector('#add-st-todo').checked = true;
     addHint.hidden = true;
     setAddDate(date || defaultAddDate());
-    addPP.set(lastTag);
+    addPP.set(defaultTag());
     creator.showModal();
     addTitle.focus();
   }
@@ -1613,7 +1615,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       const g = btn.dataset.grp; ui.folded[g] = !ui.folded[g]; saveUi(); render();
       grid.querySelector(`.grp-toggle[data-grp="${g}"]`)?.focus({ preventScroll:true }); return;
     }
-    if (btn.dataset.act === 'ia') { ui.inlineDate = btn.closest('.day').dataset.date; ui.inlineDraft = ''; inlineTag = lastTag; ui.inlineFocus = true; render(); return; }
+    if (btn.dataset.act === 'ia') { ui.inlineDate = btn.closest('.day').dataset.date; ui.inlineDraft = ''; inlineTag = defaultTag(); ui.inlineFocus = true; render(); return; }
     if (btn.dataset.act === 'add') {
       openCreator(btn.closest('.day').dataset.date);
       addTitle.focus();
