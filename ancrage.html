@@ -49,7 +49,7 @@ try { document.documentElement.dataset.theme = localStorage.getItem('semainier.v
 }
 
 *,*::before,*::after{box-sizing:border-box}
-html{scrollbar-gutter:stable} /* the page growing or shrinking never shifts the layout sideways */
+html{scrollbar-gutter:stable;-webkit-tap-highlight-color:transparent} /* the page growing or shrinking never shifts the layout sideways; no blue flash on a tap (mobile) */
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
