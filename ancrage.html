@@ -1460,18 +1460,23 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       if (e.key === 'Escape') { e.preventDefault(); closeInline(); return; }
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      const title = input.value.trim(); if (!title) return;
-      const p = proj(inlinePP.get());
-      const t = { id:uid(), title, projectId:p ? p.id : null, state:'todo', date, created:Date.now(), createdAt:Date.now() };
-      db.tasks.push(t); reveal(t); ui.flash = t.id; ui.inlineDraft = ''; ui.inlineFocus = true; save(); render(); // stays open for the next one
+      if (addInline()) { ui.inlineFocus = true; render(); } // stays open for the next one
     });
     if (focus) input.focus();
   }
+  // creates the task typed in the inline row (always "À faire", on the row's day); false when nothing is typed
+  function addInline() {
+    const title = (ui.inlineDraft || '').trim(); if (!title) return false;
+    const p = proj(inlinePP?.get());
+    const t = { id:uid(), title, projectId:p ? p.id : null, state:'todo', date:ui.inlineDate, created:Date.now(), createdAt:Date.now() };
+    db.tasks.push(t); reveal(t); ui.flash = t.id; ui.inlineDraft = ''; save();
+    return true;
+  }
   function closeInline() { ui.inlineDate = null; ui.inlineDraft = ''; inlinePP?.destroy(); inlinePP = null; render(); }
-  // clicking elsewhere closes an empty inline row (a typed draft is kept)
+  // clicking or tapping elsewhere: a typed title becomes the task, an empty row just closes
   document.addEventListener('pointerdown', e => {
     if (!ui.inlineDate || e.target.closest('.inline-add.open, .ia-open')) return;
-    if (!(ui.inlineDraft || '').trim()) closeInline();
+    addInline(); closeInline();
   });
 
   /* ---------- toast ---------- */
