@@ -271,7 +271,7 @@ dialog{overflow:visible}
 }
 .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;padding-top:1px}
 .t{font-size:13.5px;line-height:1.3;font-weight:500;overflow-wrap:anywhere;align-self:flex-start} /* hugs the text, so "on the text" is precise */
-@media (hover:hover) and (pointer:fine) and (min-width:600px){ .day.is-today .task:not([data-state="done"]) .open .t{cursor:text} } /* other days and phone layout: the title opens the detail */
+@media (hover:hover) and (pointer:fine) and (min-width:600px){ .day.is-today .task:not([data-state="done"]) .open .tt{cursor:text} } /* only on the words themselves (.tt is inline); other days and phone layout: the title opens the detail */
 .open.editing{cursor:default}
 .task.is-editing .qa{display:none}
 .t-edit{display:block;width:100%;align-self:stretch;margin:0;padding:0 2px;border:0;border-radius:3px;background:var(--surface);color:var(--ink);font:inherit;font-weight:inherit;resize:none;overflow:hidden;
@@ -1254,7 +1254,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     return `<li class="task hue${ui.flash === t.id ? ' new' : ''}" data-id="${t.id}" data-state="${t.state}" draggable="true" style="${hueStyle(p)}" title="Cliquer pour voir le détail · coche : ${checkTip.toLowerCase()}">
       <div class="body">
         <button class="check" type="button" data-act="toggle" title="${checkTip}" aria-label="${checkTip} : ${esc(t.title)}"><span class="st">${ICON[t.state]}</span></button>
-        <button class="open" type="button" data-act="detail" aria-haspopup="dialog" aria-label="${esc(t.title)} — ${STATES[t.state]}${t.seriesId ? ', récurrente' : ''}${late ? ', en retard' : ''}. Voir le détail."><span class="txt"><span class="t">${esc(t.title)}${t.seriesId ? REP_ICON : ''}${t.state === 'todo' ? due : ''}</span>${t.state === 'waiting' ? due : ''}${meta}</span></button>
+        <button class="open" type="button" data-act="detail" aria-haspopup="dialog" aria-label="${esc(t.title)} — ${STATES[t.state]}${t.seriesId ? ', récurrente' : ''}${late ? ', en retard' : ''}. Voir le détail."><span class="txt"><span class="t"><span class="tt">${esc(t.title)}</span>${t.seriesId ? REP_ICON : ''}${t.state === 'todo' ? due : ''}</span>${t.state === 'waiting' ? due : ''}${meta}</span></button>
       </div>${quick}
     </li>`;
   }
@@ -1616,10 +1616,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     if (btn.dataset.act === 'back') { setState(t, 'todo'); return; }
     if (btn.dataset.act === 'del') { deleteTask(t); return; }
     if (btn.dataset.act === 'follow') { openFollowUp(t); return; }
-    // Desktop, today's column only: a click right on the title text edits it in place (not for finished tasks).
+    // Desktop, today's column only: a click right on the words of the title (not the icons, the due date or the blank beside a short line) edits it in place (not for finished tasks).
     // Other days, phone layout or a tap with the finger: always the detail
     const canInline = finePointer.matches && !mqPhone.matches && e.pointerType !== 'touch' && btn.closest('.day.is-today');
-    if (btn.dataset.act === 'detail' && e.target.closest('.t') && t.state !== 'done' && canInline) {
+    if (btn.dataset.act === 'detail' && e.target.closest('.tt') && t.state !== 'done' && canInline) {
       inlineEdit(btn.closest('.task'), t, e.clientX, e.clientY); return;
     }
     if (btn.dataset.act === 'detail') { openEditor(t, true); return; }   // clicking the task opens its detail
