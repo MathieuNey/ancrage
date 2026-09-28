@@ -2,8 +2,8 @@
 // The page itself: network first (a deploy shows up on the next launch), cached copy when offline.
 // Manifest, icons, Google Fonts: served from the cache at once and refreshed behind the scenes.
 // Bump VERSION only to drop old caches; the page updates without it.
-const VERSION = 'ancrage-v1';
-const SHELL = ['./ancrage.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png',
+const VERSION = 'ancrage-v2';
+const SHELL = ['./ancrage.html', './manifest.webmanifest', './icons/icon-192.png',
   './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
