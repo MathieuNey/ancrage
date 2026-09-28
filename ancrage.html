@@ -22,6 +22,7 @@ if (document.documentElement.dataset.theme === 'dark') document.querySelector('m
   --tag-l:.45; --tag-c:.13; --hatch-l:.925; --hatch-c:.035;
   --shadow:0 1px 2px rgb(20 26 36 / .06), 0 10px 30px -14px rgb(20 26 36 / .22);
   --late:oklch(.55 .19 25); --late-ink:#FFFFFF; --due:oklch(.55 .12 70);
+  --mark:oklch(.92 .1 95); /* search matches */
   --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
@@ -36,6 +37,7 @@ if (document.documentElement.dataset.theme === 'dark') document.querySelector('m
     --tag-l:.80; --tag-c:.10; --hatch-l:.235; --hatch-c:.03;
     --shadow:0 1px 2px rgb(0 0 0 / .4), 0 12px 30px -14px rgb(0 0 0 / .7);
     --late:oklch(.72 .16 25); --late-ink:#1A0D0D; --due:oklch(.78 .11 75);
+    --mark:oklch(.44 .08 95);
   }
 }
 :root[data-theme="dark"]{
@@ -47,6 +49,7 @@ if (document.documentElement.dataset.theme === 'dark') document.querySelector('m
   --tag-l:.80; --tag-c:.10; --hatch-l:.235; --hatch-c:.03;
   --shadow:0 1px 2px rgb(0 0 0 / .4), 0 12px 30px -14px rgb(0 0 0 / .7);
     --late:oklch(.72 .16 25); --late-ink:#1A0D0D; --due:oklch(.78 .11 75);
+    --mark:oklch(.44 .08 95);
 }
 
 *,*::before,*::after{box-sizing:border-box}
@@ -125,6 +128,7 @@ dialog{overflow:visible}
 /* Filters */
 .bar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-block:8px 12px}
 .bar #add-open{flex:none;margin-left:auto} /* always on the tags' row, at the right */
+.bar .sr-chip{display:none} /* search from the tags' row: phone only (the header has its own button) */
 .filters{flex:1;min-width:0;display:flex;gap:6px;flex-wrap:wrap} /* too many tags: they wrap inside their own block, whose top lines up with the button */
 .chip{height:30px;padding:0 11px 0 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;color:var(--ink-2)}
 .chip:hover{border-color:var(--line-2)}
@@ -484,6 +488,43 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
 /* Aide: its own button next to ⋯ on desktop; on a phone it stays inside the ⋯ menu */
 .app-menu .mi-help{display:none}
 @media (max-width:599.98px){ .help-btn{display:none} .app-menu .mi-help{display:flex} }
+/* Search (S): a window near the top of the screen, whole screen on a phone; the field stays put while the results change */
+#search{width:min(600px,calc(100vw - 32px));margin:min(12vh,96px) auto auto;overflow:hidden}
+.sr{display:flex;flex-direction:column;max-height:min(72vh,560px)}
+.sr-field{flex:none;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;border-bottom:1px solid var(--line)}
+.sr-field > svg{flex:none;color:var(--muted)}
+.sr-field input{flex:1;min-width:0;height:40px;border:0;background:none;padding:0;font-size:16px;outline:none}
+.sr-field input::placeholder{color:var(--muted)}
+.sr-field .icon-btn{flex:none;width:32px;height:32px;border:0;background:none;color:var(--ink-2)}
+.sr-field .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+.sr-field .icon-btn:focus:not(:focus-visible){outline:none}
+.sr-list{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:4px 6px 6px}
+.sr-list:empty{display:none}
+.sr-grp{margin:0;padding:10px 10px 4px;font-size:11.5px;font-weight:600;letter-spacing:.02em;color:var(--ink-2)}
+.sr-opt{display:flex;align-items:flex-start;gap:9px;padding:7px 10px;border-radius:8px;cursor:pointer}
+.sr-opt[aria-selected="true"]{background:var(--tint);box-shadow:inset 0 0 0 1px var(--edge)}
+.sr-main{flex:1;min-width:0}
+.sr-t{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-opt[data-state="done"] .sr-t{font-weight:400;color:var(--ink-2)}
+.sr-meta{display:flex;align-items:center;gap:6px;margin-top:1px;font-size:12px;color:var(--muted);min-width:0}
+.sr-meta .sw{flex:none;width:8px;height:8px;border-radius:50%;background:var(--solid)}
+.sr-meta .sw.none{background:none;border:1.5px dashed var(--line-2)}
+.sr-tag{flex:none;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.sr-snip{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-when{flex:none;padding-top:2px;font-family:var(--f-mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.sr-when.is-today{color:var(--ink)}
+.sr mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px;margin:0 -1px}
+.sr-more,.sr-empty{margin:0;padding:10px;font-size:12.5px;color:var(--muted)}
+.sr-empty{padding:18px 16px;text-align:center}
+.sr-foot{flex:none;display:flex;gap:6px 16px;flex-wrap:wrap;padding:8px 16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+.sr-foot .kbd{margin:0 3px 0 0;opacity:.8}
+@media (hover:none),(max-width:599.98px){ .sr-foot{display:none} }
+@media (max-width:599.98px){
+  #search{width:100%;max-width:100%;height:100dvh;max-height:100dvh;margin:0;border:0;border-radius:0;overflow:hidden;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+  .sr{height:100%;max-height:none}
+}
+/* a task reached from the search is selected as with ↑ / ↓: the outline stays until the focus moves on, even after a click or a tap */
+.task.picked:has(> .body > .check:focus){outline:2px solid var(--ink);outline-offset:2px}
 .inl-ic{display:inline-block;vertical-align:-1px}
 .im-drop{display:flex;align-items:center;gap:12px;padding:16px;border:1.5px dashed var(--line-2);border-radius:10px;cursor:pointer;color:var(--ink-2)}
 .im-drop:hover,.im-drop.over{border-color:var(--ink);background:var(--surface-2);color:var(--ink)}
@@ -571,10 +612,14 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   .today-txt{display:none}
   .wk-range{font-size:15.5px;gap:6px}
   .wk-num{min-width:0}
-  .bar{padding-block:4px 10px}
+  .bar{padding-block:4px 10px;gap:8px}
   .filters{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding-inline:16px;scrollbar-width:none;overscroll-behavior-x:contain}
   .filters::-webkit-scrollbar{display:none}
   .filters .chip{flex:none}
+  /* search: no room left in the header, so its button heads the tags' row (which stays put while the tags scroll) */
+  .top .search-btn{display:none}
+  .bar .sr-chip{display:inline-flex;flex:none;width:30px;padding:0;justify-content:center;color:var(--ink)}
+  .sr-chip + .filters{margin-left:0;padding-left:0}
   .bar #add-open{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9;width:56px;height:56px;padding:0;border-radius:50%;display:grid;place-items:center;box-shadow:var(--shadow);font-size:28px;font-weight:500;line-height:1}
   .add-plus{margin:0}
   .add-txt,#add-open .kbd{display:none}
@@ -623,6 +668,9 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       <button type="button" data-view="rolling" aria-pressed="true" title="Autour d’aujourd’hui, selon la taille de l’écran">Adaptatif</button>
       <button type="button" data-view="week" aria-pressed="false" title="Du lundi au vendredi, semaine par semaine">Semaine</button>
     </div>
+    <button class="icon-btn search-btn" id="search-btn" type="button" aria-haspopup="dialog" aria-label="Rechercher une tâche" title="Rechercher (S)">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
     <button class="icon-btn help-btn" id="help-btn" type="button" aria-label="Aide" title="Aide">
       <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6.2 6.3a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.6" r=".9" fill="currentColor"/></svg>
     </button>
@@ -639,6 +687,9 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   </div>
 
   <div class="bar">
+    <button class="chip sr-chip search-btn" type="button" aria-haspopup="dialog" aria-label="Rechercher une tâche" title="Rechercher">
+      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
     <div class="filters" id="filters" role="group" aria-label="Filtrer par tag"></div>
     <button class="primary" id="add-open" type="button" title="Nouvelle tâche (A)" aria-label="Ajouter une tâche"><span class="add-plus" aria-hidden="true">+</span><span class="add-txt">Ajouter</span><span class="kbd">A</span></button>
   </div>
@@ -807,6 +858,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         <dt><span class="kbd">Espace</span></dt><dd>détail</dd>
         <dt><span class="kbd">T</span></dt><dd>aujourd’hui</dd>
         <dt><span class="kbd">F</span></dt><dd>focus</dd>
+        <dt><span class="kbd">S</span></dt><dd>rechercher</dd>
       </dl>
     </section>
     <section class="help-sec">
@@ -822,6 +874,27 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         <dt>Week-end</dt><dd>masqué, sauf avec « Afficher le week-end » (menu ⋯) ; masqué, ses tâches passent au lundi, qui tient lieu d’aujourd’hui le samedi et le dimanche</dd>
       </dl>
     </section>
+  </div>
+</dialog>
+
+<dialog id="search" aria-label="Rechercher une tâche">
+  <div class="sr">
+    <div class="sr-field">
+      <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input id="sr-input" type="text" role="combobox" aria-expanded="true" aria-controls="sr-list" aria-autocomplete="list" aria-label="Rechercher une tâche" aria-describedby="sr-empty" placeholder="Rechercher une tâche…" maxlength="160" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" autofocus>
+      <button class="icon-btn" type="button" id="sr-close" aria-label="Fermer" title="Fermer (Échap)">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="sr-list" id="sr-list" role="listbox" aria-label="Tâches trouvées"></div>
+    <p class="sr-empty" id="sr-empty"></p>
+    <p class="sr-only" id="sr-status" role="status"></p>
+    <div class="sr-foot" aria-hidden="true">
+      <span><span class="kbd">↑</span><span class="kbd">↓</span>choisir</span>
+      <span><span class="kbd">Entrée</span>aller à la tâche</span>
+      <span><span class="kbd">Maj</span><span class="kbd">Entrée</span>ouvrir le détail</span>
+      <span><span class="kbd">Échap</span>fermer</span>
+    </div>
   </div>
 </dialog>
 
@@ -2490,10 +2563,150 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   });
   grid.addEventListener('keyup', e => { if (e.key === ' ' && taskKeyTarget(e)) e.preventDefault(); }); // a button fires its click on Space keyup
 
+  /* ---------- search (S): title, note and tag of every task, whatever the week and the tag filter ----------
+     Every word typed must be found somewhere (accents, case and ’ / ' do not count). Open tasks first, by day,
+     then finished ones, latest first. Entrée or a click goes to the task, Maj + Entrée opens its detail. */
+  const search = $('#search'), srInput = $('#sr-input'), srList = $('#sr-list'), srEmpty = $('#sr-empty'), srStatus = $('#sr-status');
+  const SR_MAX = 50; // rows per group; past that, a line asks for more words
+  const FOLD = { 'œ':'oe', 'Œ':'oe', 'æ':'ae', 'Æ':'ae', 'ß':'ss', '’':"'", '‘':"'" };
+  // folded text (no accents, lower case) and, for each of its characters, the index of the original one
+  function fold(s) {
+    let out = ''; const map = [];
+    for (let i = 0; i < s.length; i++) {
+      const f = FOLD[s[i]] ?? s[i].normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+      for (let k = 0; k < f.length; k++) { out += f[k]; map.push(i); }
+    }
+    return { out, map };
+  }
+  // where the words occur in `s` (ranges in the original text) and which of them were found
+  function hits(s, words) {
+    const { out, map } = fold(s), ranges = [], found = new Set();
+    words.forEach((w, i) => {
+      for (let p = out.indexOf(w); p !== -1; p = out.indexOf(w, p + w.length)) { found.add(i); ranges.push([map[p], map[p + w.length - 1] + 1]); }
+    });
+    return { ranges, found };
+  }
+  // escaped text, its matches in <mark>
+  function marked(s, ranges) {
+    let html = '', at = 0;
+    [...ranges].sort((a, b) => a[0] - b[0]).forEach(([a, b]) => {
+      if (b <= at) return;
+      a = Math.max(a, at); html += esc(s.slice(at, a)) + `<mark>${esc(s.slice(a, b))}</mark>`; at = b;
+    });
+    return html + esc(s.slice(at));
+  }
+  // one line of the note, from a little before its first match (the row cuts the end with "…")
+  function snippet(note, words) {
+    const flat = note.replace(/\s+/g, ' ').trim(), { ranges } = hits(flat, words);
+    if (!ranges.length) return '';
+    const first = Math.min(...ranges.map(r => r[0]));
+    let a = 0;
+    if (first > 28) { a = first - 24; const sp = flat.indexOf(' ', a); if (sp !== -1 && sp < first) a = sp + 1; }
+    const part = flat.slice(a, a + 160);
+    const rs = ranges.map(([x, y]) => [Math.max(0, x - a), Math.min(part.length, y - a)]).filter(([x, y]) => x < y);
+    return (a ? '…' : '') + marked(part, rs);
+  }
+  function srMatch(t, words) {
+    const p = proj(t.projectId);
+    const inTitle = hits(t.title, words), inNote = t.note ? hits(t.note, words) : null, inTag = p ? hits(p.name, words) : null;
+    const found = new Set([...inTitle.found, ...(inNote?.found || []), ...(inTag?.found || [])]);
+    if (found.size < words.length) return null;
+    const byNote = inNote && [...inNote.found].some(i => !inTitle.found.has(i)); // the note found what the title did not: show where
+    return { t, p, title:marked(t.title, inTitle.ranges), tag:p ? marked(p.name, inTag.ranges) : 'Sans tag', snip:byNote ? snippet(t.note, words) : '' };
+  }
+  // the day the task shows on in the grid (today for carried, in progress and waiting ones)
+  function srWhen(t) {
+    const d = shownDate(t), n = dayDiff(d, todayIso()), x = parse(d);
+    if (d === anchorDay()) return 'Aujourd’hui';
+    if (n === 1) return 'Demain';
+    if (n === -1) return 'Hier';
+    return fmtDue.format(x) + (x.getFullYear() !== new Date().getFullYear() ? ' ' + x.getFullYear() : '');
+  }
+  let srRows = [], srAt = 0;
+  function runSearch(keepAt = false) {
+    const words = [...new Set(fold(srInput.value).out.split(/\s+/).filter(Boolean))];
+    const found = words.length ? db.tasks.map(t => srMatch(t, words)).filter(Boolean) : [];
+    const open = found.filter(r => r.t.state !== 'done')
+      .sort((a, b) => shownDate(a.t).localeCompare(shownDate(b.t)) || ORDER[a.t.state] - ORDER[b.t.state] || rankOf(a.t) - rankOf(b.t) || a.t.created - b.t.created);
+    const done = found.filter(r => r.t.state === 'done')
+      .sort((a, b) => shownDate(b.t).localeCompare(shownDate(a.t)) || (b.t.doneAt || 0) - (a.t.doneAt || 0));
+    srRows = [];
+    const row = r => {
+      const i = srRows.push(r) - 1, t = r.t, d = shownDate(t);
+      return `<div class="sr-opt hue" role="option" id="sr-o${i}" data-i="${i}" data-state="${t.state}" aria-selected="false" style="${hueStyle(r.p)}">
+          <span class="st">${ICON[t.state]}</span>
+          <span class="sr-main"><span class="sr-t">${r.title}${t.seriesId ? REP_ICON : ''}</span>
+            <span class="sr-meta"><span class="sw${r.p ? '' : ' none'}"></span><span class="sr-tag">${r.tag}</span>${r.snip ? `<span class="sr-snip">· ${r.snip}</span>` : ''}</span></span>
+          <span class="sr-when${d === anchorDay() ? ' is-today' : ''}" title="${fmtLong.format(parse(d))}">${srWhen(t)}</span><span class="sr-only">, ${STATES[t.state]}</span>
+        </div>`;
+    };
+    const group = (id, label, list) => !list.length ? '' : `<div role="group" aria-labelledby="sr-${id}"><p class="sr-grp" id="sr-${id}" role="presentation">${label} · ${list.length}</p>`
+      + list.slice(0, SR_MAX).map(row).join('')
+      + (list.length > SR_MAX ? `<p class="sr-more" role="presentation">… et ${list.length - SR_MAX} de plus : ajoutez un mot pour préciser.</p>` : '') + '</div>';
+    srList.innerHTML = group('open', 'À venir', open) + group('done', 'Terminées', done);
+    srList.scrollTop = 0;
+    srEmpty.textContent = !words.length ? 'Intitulé, note ou tag, sur toutes les semaines.'
+      : found.length ? '' : `Aucune tâche trouvée pour « ${srInput.value.trim()} ».`;
+    srEmpty.hidden = !srEmpty.textContent;
+    srStatus.textContent = !words.length ? '' : found.length ? `${plural(found.length)} trouvée${found.length > 1 ? 's' : ''}` : 'Aucune tâche trouvée';
+    srAt = keepAt ? Math.min(srAt, Math.max(0, srRows.length - 1)) : 0;
+    syncActive(false);
+  }
+  function syncActive(scroll = true) {
+    srList.querySelector('.sr-opt[aria-selected="true"]')?.setAttribute('aria-selected', 'false');
+    const o = srRows.length ? $(`#sr-o${srAt}`) : null;
+    if (!o) { srInput.removeAttribute('aria-activedescendant'); return; }
+    o.setAttribute('aria-selected', 'true'); srInput.setAttribute('aria-activedescendant', o.id);
+    if (!scroll) return;
+    if (srAt === 0) srList.scrollTop = 0; else o.scrollIntoView({ block:'nearest' }); // the first one: its group title too
+  }
+  function openSearch() {
+    closeMenu(false); closeAppMenu(false);
+    search.showModal();
+    srInput.select(); // the last search is kept: typing replaces it
+    runSearch();
+  }
+  // a found task: its week on screen if needed, its group unfolded, the tag filter lifted if it hides it; it is selected (keyboard focus)
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  function jumpTo(t, detail) {
+    search.close();
+    const d = shownDate(t);
+    reveal(t);
+    const grp = t.state === 'waiting' ? 'waiting' : t.state === 'done' && d === anchorDay() ? 'done' : null;
+    if (grp && ui.folded[grp]) { ui.folded[grp] = false; saveUi(); }
+    if (ui.focus && d !== anchorDay()) ui.focus = false;
+    if (!weekDates().includes(d)) { ui.view = 'week'; ui.week = monday(parse(d)); addDate = null; }
+    render();
+    const el = grid.querySelector(`.task[data-id="${t.id}"]`); if (!el) return;
+    const r = el.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > innerHeight) el.scrollIntoView({ block:'center', behavior:reduceMotion.matches ? 'auto' : 'smooth' });
+    const check = el.querySelector('.check');
+    el.classList.add('picked'); // selected as from the keyboard, until the focus leaves it
+    check.addEventListener('blur', () => el.classList.remove('picked'), { once:true });
+    check.focus({ preventScroll:true });
+    if (detail) openEditor(t);
+  }
+  document.querySelectorAll('.search-btn').forEach(b => { b.onclick = openSearch; }); // header, or the tags' row on a phone
+  $('#sr-close').onclick = () => search.close();
+  search.addEventListener('click', e => { if (e.target === search) search.close(); });
+  srInput.addEventListener('input', () => runSearch());
+  srInput.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (srRows.length) { srAt = Math.max(0, Math.min(srRows.length - 1, srAt + (e.key === 'ArrowDown' ? 1 : -1))); syncActive(); }
+    } else if (e.key === 'Enter' && !e.isComposing) {
+      e.preventDefault();
+      if (srRows[srAt]) jumpTo(srRows[srAt].t, e.shiftKey);
+    }
+  });
+  srList.addEventListener('click', e => { const o = e.target.closest('.sr-opt'); if (o) jumpTo(srRows[+o.dataset.i].t, e.shiftKey); });
+  srList.addEventListener('mousemove', e => { const o = e.target.closest('.sr-opt'); if (o && +o.dataset.i !== srAt) { srAt = +o.dataset.i; syncActive(false); } });
+
   /* shortcuts */
   document.addEventListener('keydown', e => {
-    if (editor.open || creator.open || tagMgr.open || exporter.open || importer.open || $('#help').open || !appMenu.hidden || !menu.hidden || addPP.isOpen() || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input,select,textarea')) return;
+    if (editor.open || creator.open || tagMgr.open || exporter.open || importer.open || $('#help').open || search.open || !appMenu.hidden || !menu.hidden || addPP.isOpen() || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input,select,textarea')) return;
     if (e.key === 'a' || e.key === 'A') { e.preventDefault(); openCreator(); }
+    else if (e.key === 's' || e.key === 'S') { e.preventDefault(); openSearch(); }
     else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); moveTaskFocus(e.key === 'ArrowDown' ? 1 : -1); }
     else if (e.key === 'ArrowLeft') { if (!moveTaskColumn(-1)) $('#prev').click(); }
     else if (e.key === 'ArrowRight') { if (!moveTaskColumn(1)) $('#next').click(); }
@@ -2522,6 +2735,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       if (t) refreshEditor(t); else { editor.close(); toast('Tâche supprimée dans un autre onglet'); }
     }
     if (tagMgr.open && !document.activeElement?.matches('.tm-name')) renderTagMgr();
+    if (search.open) runSearch(true);
     if (grid.querySelector('.t-edit')) return; // a title being edited in place: its end re-renders (and saves onto the new data)
     // no recurring occurrence created here: the tab that saved creates it (both doing so would make two)
     externalRender = true; try { render(); } finally { externalRender = false; }

@@ -34,6 +34,7 @@ Les tâches sont enregistrées dans le stockage local du navigateur. Pour les sa
 - Mode focus sur aujourd'hui, barre de progression, carte « Journée bouclée » quand tout est terminé
 - Relances depuis une tâche en attente
 - Tags : filtres, couleurs, anciens tags, gestion (renommer, fusionner, supprimer)
+- Recherche (loupe ou `S`) dans l'intitulé, la note et le tag de toutes les tâches, sans tenir compte des accents ; à venir d'abord, puis terminées. Entrée amène à la tâche (sa semaine, son groupe déplié), Maj + Entrée ouvre son détail
 - Glisser-déposer, raccourcis clavier, mode sombre
 - Export et import JSON
 
