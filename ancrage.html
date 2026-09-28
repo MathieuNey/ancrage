@@ -1070,7 +1070,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     t.date = shownDate(t); // acting on a task happens where it is shown (today for carried ones), not back in the past
     if (from === 'done') delete t.doneAt;                        // leaving "done" erases its completion date
     delete t.rank;                                               // joins the end of its new group
-    if (s === 'done') { t.prev = from; t.doneAt = Date.now(); }
+    if (s === 'done') { t.prev = from; t.doneAt = Date.now(); if (t.date > todayIso()) t.date = todayIso(); } // finished ahead of time: it moves to today, the day it was actually done
     if (s === 'doing') t.doingAt = Date.now();
     if (TODAY_ONLY[s]) t.date = anchorDay();
     if (s === 'waiting' && !(from === 'done' && t.prev === 'waiting' && t.waitingSince)) t.waitingSince = todayIso();
@@ -1567,7 +1567,10 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   const focusCard = id => grid.querySelector(`.task[data-id="${id}"] .check`)?.focus({ preventScroll:true });
   function setState(t, s) {
     if (t.state === s) return;
+    const was = shownDate(t);
     applyState(t, s); ui.flash = t.id; save(); render(); focusCard(t.id);
+    const now = shownDate(t); // finished in a future week: it left the screen for today
+    if (s === 'done' && now !== was && !weekDates().includes(now)) toast('Terminée aujourd’hui', 'Voir', () => goTo(now));
   }
   const toggle = t => setState(t, t.state === 'done' ? (t.prev && t.prev !== 'done' ? t.prev : 'todo') : 'done');
 
