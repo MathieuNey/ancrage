@@ -1682,8 +1682,29 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId);
   });
   // on document: after a drop the source card is re-rendered away, so its dragend never bubbles to the grid
-  const endDrag = () => { dragId = null; dropAt = null; grid.querySelectorAll('.dragging').forEach(n => n.classList.remove('dragging')); clearDropMarks(); };
+  const endDrag = () => { dragId = null; dropAt = null; stopEdgeScroll(); grid.querySelectorAll('.dragging').forEach(n => n.classList.remove('dragging')); clearDropMarks(); };
   document.addEventListener('dragend', endDrag);
+  // while dragging a task, the page scrolls from a wide band at the top / bottom of the window (the browser's own one is a few pixels),
+  // faster the closer to the edge
+  let edgeY = null, edgeRaf = 0;
+  const edgeSpeed = () => {
+    const h = innerHeight, band = Math.min(160, Math.max(80, h * .18));
+    const d = edgeY < band ? edgeY - band : edgeY > h - band ? edgeY - (h - band) : 0;
+    return Math.round(d / band * 22);          // px per frame, up to ~22 at the very edge
+  };
+  const edgeStep = () => {
+    const v = edgeY === null ? 0 : edgeSpeed();
+    if (!v) { edgeRaf = 0; return; }
+    scrollBy(0, v); edgeRaf = requestAnimationFrame(edgeStep);
+  };
+  function stopEdgeScroll() { edgeY = null; cancelAnimationFrame(edgeRaf); edgeRaf = 0; }
+  document.addEventListener('dragover', e => {
+    if (!dragId) return;
+    edgeY = e.clientY;
+    if (!edgeRaf && edgeSpeed()) edgeRaf = requestAnimationFrame(edgeStep);
+  });
+  document.addEventListener('drop', stopEdgeScroll);
+  document.addEventListener('dragleave', e => { if (!e.relatedTarget) stopEdgeScroll(); }); // pointer left the window
   grid.addEventListener('dragover', e => {
     const day = e.target.closest('.day'); if (!day || !dragId) return;
     clearDropMarks(); dropAt = null;
