@@ -221,6 +221,7 @@ dialog{overflow:visible}
 .task{border-radius:8px;border:1px solid var(--edge);background:var(--tint);color:var(--ink);position:relative;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .task:hover{border-color:var(--tag)}
 .task.dragging{opacity:.35}
+.task.menu-open{outline:2px solid var(--ink);outline-offset:1px}
 .task.new{animation:pop .5s ease-out}
 @keyframes pop{from{transform:scale(.95);box-shadow:0 0 0 4px var(--edge)}}
 /* Card = wide check zone (left edge up to the title) + the rest, which opens the detail. Paddings are variables so both hit areas can bleed to the card edges */
@@ -385,6 +386,38 @@ dialog{overflow:visible}
 .menu button:focus-visible{box-shadow:inset 0 0 0 1.5px var(--ink)}
 .menu [aria-checked="true"]{font-weight:600}
 .menu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+/* Task menu (right click, desktop): a row of state icons, a row of tag swatches, then Date / Répéter / Deadline, each opening a panel in place */
+.task-menu{width:252px}
+.task-menu .mh{padding:6px 10px 4px;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-menu .mrow{display:flex;flex-wrap:wrap;gap:2px;padding:2px 4px}
+.task-menu .mrow button{min-height:0;padding:0;justify-content:center;position:relative}
+.task-menu .mst{width:34px;height:30px;color:var(--tag)}
+.task-menu .mst .pulse{animation:none}
+.task-menu .mst[aria-checked="true"]{background:var(--tint);box-shadow:inset 0 0 0 1.5px var(--edge)}
+.task-menu .msw{width:26px;height:26px;border-radius:50%}
+.task-menu .msw .sw{width:14px;height:14px;border-radius:50%;background:var(--solid)}
+.task-menu .msw[data-id=""] .sw{background:none;border:1.5px dashed var(--line-2)}
+.task-menu .msw[aria-checked="true"] .sw{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--solid)}
+.task-menu .msw[data-id=""][aria-checked="true"] .sw{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--ink-2)}
+.task-menu .mi-ic{flex:none;display:grid;color:var(--ink-2)}
+.task-menu .cur{margin-left:auto;font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap}
+.task-menu .chev{flex:none;display:grid;color:var(--muted);margin-right:-4px}
+.task-menu [aria-disabled="true"]{color:var(--muted);cursor:default}
+.task-menu [aria-disabled="true"]:hover{background:none}
+.task-menu .mback{font-weight:600}
+.task-menu .mpick{display:flex;gap:6px;padding:4px 6px 4px 10px;align-items:center}
+.task-menu .mpick input{flex:1;min-width:0;height:30px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);padding:0 6px;font-size:13px}
+.task-menu .mpick button{flex:none;min-height:30px;padding:0 10px;background:var(--ink);color:var(--surface);font-weight:600;justify-content:center}
+.task-menu .mpick button:hover,.task-menu .mpick button:focus-visible{background:var(--ink);opacity:.88}
+.task-menu .mi-danger{color:oklch(.55 .19 25)}
+/* tooltips: quick, under the item (a wide entry keeps its text inside the menu) */
+.task-menu [data-tip]{position:relative}
+.task-menu [data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);z-index:1;padding:3px 7px;border-radius:5px;
+  background:var(--ink);color:var(--surface);font-size:11.5px;font-weight:500;line-height:1.35;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .1s}
+.task-menu [data-tip]:hover::after,.task-menu [data-tip]:focus-visible::after{opacity:1;transition-delay:.2s}
+.task-menu [data-tip].tip-start::after{left:0;transform:none}
+.task-menu [data-tip].tip-end::after{left:auto;right:0;transform:none}
+.task-menu > [data-tip]::after{left:8px;right:8px;transform:none;white-space:normal}
 
 /* Editor dialog */
 dialog{border:1px solid var(--line);border-radius:14px;padding:0;width:min(460px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
@@ -619,6 +652,8 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   </footer>
 </div>
 
+<div class="menu task-menu hue" id="menu" role="menu" hidden></div>
+
 <dialog id="creator" aria-labelledby="cr-heading">
   <form class="ed" id="add" autocomplete="off">
     <div class="ed-head">
@@ -758,6 +793,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         <dt>▶</dt><dd>en cours</dd>
         <dt><svg class="inl-ic" width="12" height="12" viewBox="0 0 12 12" role="img" aria-label="Flèche retour"><path d="M4.3 2.6L2 4.9l2.3 2.3M2.3 4.9h4.6a2.6 2.6 0 0 1 0 5.2H5.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></dt><dd>à faire</dd>
         <dt>⏸</dt><dd>en attente</dd>
+        <dt>Clic droit (ordinateur)</dt><dd>état, tag, date, répétition, deadline</dd>
         <dt>Glisser une tâche</dt><dd>changer de jour</dd>
       </dl>
     </section>
@@ -1158,9 +1194,12 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   }
   // choices of a "Répéter" list for a task on `day`: "premier / dernier jour hors week-end" only when the day is one,
   // or when it is the rule already in place (`keep`); the current choice is kept when still offered
-  function fillRepeat(sel, day, current = sel.value, keep = current) {
+  function repeatKeys(day, keep) {
     const d = parse(day), edge = { f1:firstWd(d.getFullYear(), d.getMonth()) === day, l1:lastWd(d.getFullYear(), d.getMonth()) === day };
-    const keys = Object.keys(REPEAT).filter(k => !(k in edge) || edge[k] || k === keep);
+    return Object.keys(REPEAT).filter(k => !(k in edge) || edge[k] || k === keep);
+  }
+  function fillRepeat(sel, day, current = sel.value, keep = current) {
+    const keys = repeatKeys(day, keep);
     sel.innerHTML = '<option value="">Ne pas répéter</option>' + keys.map(k => `<option value="${k}">${REPEAT[k].label}</option>`).join('');
     sel.value = keys.includes(current) ? current : '';
   }
@@ -1253,7 +1292,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       ? `<button class="quick hold" type="button" data-act="back" title="Remettre à faire" aria-label="Remettre « ${esc(t.title)} » à faire"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.3 2.6L2 4.9l2.3 2.3M2.3 4.9h4.6a2.6 2.6 0 0 1 0 5.2H5.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : '';
     const del = `<button class="quick del" type="button" data-act="del" title="Supprimer" aria-label="Supprimer « ${esc(t.title)} »"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>`;
     const quick = `<span class="qa">${start}${back}${hold}${follow}${del}</span>`; // delete is offered on every task
-    return `<li class="task hue${ui.flash === t.id ? ' new' : ''}" data-id="${t.id}" data-state="${t.state}" draggable="true" style="${hueStyle(p)}" title="Cliquer pour voir le détail · coche : ${checkTip.toLowerCase()}">
+    return `<li class="task hue${ui.flash === t.id ? ' new' : ''}" data-id="${t.id}" data-state="${t.state}" draggable="true" style="${hueStyle(p)}" title="Cliquer pour voir le détail · coche : ${checkTip.toLowerCase()}${finePointer.matches && !mqPhone.matches ? ' · clic droit : plus d’options' : ''}">
       <div class="body">
         <button class="check" type="button" data-act="toggle" title="${checkTip}" aria-label="${checkTip} : ${esc(t.title)}"><span class="st">${ICON[t.state]}</span></button>
         <button class="open" type="button" data-act="detail" aria-haspopup="dialog" aria-label="${esc(t.title)} — ${STATES[t.state]}${t.seriesId ? ', récurrente' : ''}${late ? ', en retard' : ''}. Voir le détail."><span class="txt"><span class="t"><span class="tt">${esc(t.title)}</span>${t.seriesId ? REP_ICON : ''}${t.state === 'todo' ? due : ''}</span>${t.state === 'waiting' ? due : ''}${meta}</span></button>
@@ -1640,6 +1679,184 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     if (btn.dataset.act === 'detail') { openEditor(t, true); return; }   // clicking the task opens its detail
     if (btn.dataset.act === 'toggle') toggle(t);                   // only the check finishes / reopens it
   });
+
+  /* ---------- task menu: right click (or the menu key / Shift+F10) on a task, desktop only ----------
+     A row of states and a row of tags (tooltips on hover), then Date / Répéter / Deadline: each opens its panel in place of the menu */
+  const menu = $('#menu');
+  const deskMenu = () => finePointer.matches && !mqPhone.matches;
+  const CAL_IC = '<svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 6.8h11M5.5 2v3M10.5 2v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  const REP_MI = '<svg width="15" height="15" viewBox="0 0 12 12" aria-hidden="true"><path d="M9.8 4.6A4 4 0 0 0 2.4 4M2.2 7.4a4 4 0 0 0 7.4.6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M2 1.8v2.4h2.4M10 10.2V7.8H7.6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const FLAG_MI = '<svg width="15" height="15" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 10.5V1.8M3 2.2h5.6l-1.2 2 1.2 2H3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CHEV_R = '<svg width="12" height="12" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.8 2.5L6.3 5 3.8 7.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CHEV_L = '<svg width="12" height="12" viewBox="0 0 10 10" aria-hidden="true"><path d="M6.2 2.5L3.7 5l2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const DATE_LOCK = 'Une tâche en cours ou en attente est toujours sur aujourd’hui.';
+  const REP_SHORT = { w1:'Chaque semaine', w2:'Toutes les 2 sem.', w3:'Toutes les 3 sem.', w4:'Toutes les 4 sem.', m1:'Chaque mois', f1:'1er jour du mois', l1:'Dernier jour du mois', m3:'Tous les 3 mois' }; // value shown on the "Répéter" entry
+  // "Aujourd’hui", "Demain", "Hier", else the day's name ("Lundi", "Vendredi prochain" a week or more ahead)
+  const relDay = d => { const n = dayDiff(d, todayIso()); return n === 0 ? 'Aujourd’hui' : n === 1 ? 'Demain' : n === -1 ? 'Hier' : dayName(d) + (n >= 7 ? ' prochain' : n < -1 ? ' dernier' : ''); };
+  const uniq = ds => [...new Set(ds)];
+  function dateChoices(t) {
+    const a = anchorDay();
+    if (t.state === 'done') return uniq([a, iso(stepWeekday(parse(a), -1))]); // a finished task: the day it was done
+    return uniq([a, iso(stepWeekday(parse(a), 1)), iso(addDays(monday(parse(a)), 7)), iso(addDays(parse(a), 7))]);
+  }
+  function dueChoices() {
+    const a = anchorDay(), fri = addDays(monday(parse(a)), 4);
+    return uniq([a, iso(stepWeekday(parse(a), 1)), iso(dayDiff(iso(fri), a) < 2 ? addDays(fri, 7) : fri), iso(addDays(parse(a), 7))]);
+  }
+  let menuTask = null, menuAt = null; // task · { x, y } where the menu was opened
+  const radio = (on, attrs, inner, tip) => `<button type="button" role="menuitemradio" aria-checked="${on}" ${attrs}${tip ? ` data-tip="${esc(tip)}" aria-label="${esc(tip)}"` : ''}>${inner}</button>`;
+  function menuMain(t) {
+    const today = shownDate(t);
+    const states = ['todo', 'doing', 'waiting', 'done'].map(s => radio(t.state === s, `class="mst" data-state="${s}"`, ICON[s],
+      STATES[s] + (TODAY_ONLY[s] && t.state !== s && today !== anchorDay() ? ' (passe sur aujourd’hui)' : ''))).join('');
+    const cur = proj(t.projectId);
+    const tags = [...db.projects].sort((a, b) => a.name.localeCompare(b.name, 'fr')).filter(p => isActiveTag(p) || p === cur); // an old tag only when it is this task's
+    const sw = (p, name) => radio((p ? p.id : null) === (cur ? cur.id : null), `class="msw hue" style="${hueStyle(p)}" data-id="${p ? p.id : ''}"`, '<span class="sw"></span>', name);
+    const rep = serie(t.seriesId), lockDate = TODAY_ONLY[t.state];
+    const row = (panel, ic, label, val, lock) => `<button type="button" role="menuitem" data-panel="${panel}"${lock ? ` aria-disabled="true" data-tip="${esc(lock)}"` : ' aria-haspopup="menu"'}><span class="mi-ic">${ic}</span>${label}<span class="cur">${esc(val)}</span>${lock ? '' : `<span class="chev">${CHEV_R}</span>`}</button>`;
+    return `<div class="mh">${esc(t.title)}</div>`
+      + `<div class="mrow" role="group" aria-label="État">${states}</div>`
+      + `<div class="mrow" role="group" aria-label="Tag">${sw(null, 'Aucun tag')}${tags.map(p => sw(p, p.name)).join('')}</div><hr>`
+      + row('date', CAL_IC, 'Date', today === todayIso() ? 'Aujourd’hui' : fmtDue.format(parse(today)), lockDate && DATE_LOCK)
+      + row('repeat', REP_MI, 'Répéter', rep ? REP_SHORT[repeatKey(rep)] || '' : 'Non', '')
+      + row('due', FLAG_MI, 'Deadline', t.seriesId ? 'Jour prévu' : t.due ? fmtDue.format(parse(t.due)) : 'Aucune', t.seriesId && REP_DUE)
+      + '<hr><button type="button" role="menuitem" data-act="edit">Voir le détail</button><button type="button" role="menuitem" data-act="delete" class="mi-danger">Supprimer</button>';
+  }
+  function menuPanel(t, panel) {
+    const back = label => `<button type="button" role="menuitem" class="mback" data-act="back"><span class="chev">${CHEV_L}</span>${label}</button><hr>`;
+    const day = (d, attr, on) => radio(on, `data-${attr}="${d}"`, `${relDay(d)}<span class="cur">${fmtDue.format(parse(d))}</span>`);
+    const pick = (attr, v, min) => `<div class="mpick"><input type="date" value="${v}"${min ? ` min="${min}"` : ''} aria-label="Autre date"><button type="button" data-pick="${attr}">OK</button></div>`;
+    if (panel === 'date') {
+      const cur = shownDate(t);
+      return back('Date') + dateChoices(t).map(d => day(d, 'date', d === cur)).join('') + pick('date', cur, t.state === 'done' ? '' : todayIso());
+    }
+    if (panel === 'due') {
+      return back('Deadline') + dueChoices().map(d => day(d, 'due', d === t.due)).join('') + pick('due', t.due || '', '')
+        + (t.due ? '<hr><button type="button" role="menuitem" data-act="nodue" class="mi-danger">Retirer la deadline</button>' : '');
+    }
+    const key = repeatKey(serie(t.seriesId));
+    return back('Répéter') + radio(!key, 'data-rep=""', 'Ne pas répéter') + repeatKeys(shownDate(t), key).map(k => radio(k === key, `data-rep="${k}"`, REPEAT[k].label)).join('');
+  }
+  // places the menu at the pointer (above it when there is no room below); a panel opened in place stays put, lifted only if it overflows
+  function placeMenu(keep) {
+    const r = menu.getBoundingClientRect();
+    let top = keep ? Math.min(r.top, innerHeight - r.height - 8) : menuAt.y + r.height > innerHeight - 8 ? menuAt.y - r.height : menuAt.y;
+    menu.style.left = Math.max(8, Math.min(menuAt.x, innerWidth - r.width - 8)) + 'px';
+    menu.style.top = Math.max(8, top) + 'px';
+    menu.querySelectorAll('.mrow [data-tip]').forEach(b => { // tooltips of the icons near an edge open inwards
+      b.classList.toggle('tip-start', b.offsetLeft < 30);
+      b.classList.toggle('tip-end', b.offsetLeft + b.offsetWidth > menu.clientWidth - 30);
+    });
+  }
+  function showMenu(panel, focusSel) {
+    const t = menuTask;
+    menu.dataset.panel = panel || '';
+    menu.setAttribute('aria-label', panel ? { date:'Date', due:'Deadline', repeat:'Répéter' }[panel] : `Actions pour « ${t.title} »`);
+    menu.innerHTML = panel ? menuPanel(t, panel) : menuMain(t);
+    placeMenu(true);
+    (menu.querySelector(focusSel) || (panel ? menu.querySelector('[aria-checked="true"]') : null) || menu.querySelector('button')).focus();
+  }
+  function openMenu(t, x, y) {
+    menuTask = t; menuAt = { x, y };
+    menu.setAttribute('style', hueStyle(proj(t.projectId)));
+    grid.querySelectorAll('.menu-open').forEach(n => n.classList.remove('menu-open'));
+    grid.querySelector(`.task[data-id="${t.id}"]`)?.classList.add('menu-open');
+    menu.hidden = false; menu.dataset.panel = '';
+    menu.innerHTML = menuMain(t);
+    placeMenu(false);
+    menu.querySelector('button').focus();
+  }
+  function closeMenu(refocus) {
+    if (menu.hidden) return;
+    menu.hidden = true; menu.innerHTML = '';
+    grid.querySelectorAll('.menu-open').forEach(n => n.classList.remove('menu-open'));
+    const id = menuTask?.id; menuTask = null;
+    if (refocus && id) focusCard(id);
+  }
+  grid.addEventListener('contextmenu', e => {
+    const li = e.target.closest('.task');
+    if (!li || !deskMenu() || e.target.closest('textarea,input')) return; // touch / phone layout, or a title edited in place: the browser's own menu
+    const t = taskOf(li); if (!t) return;
+    e.preventDefault();
+    if (e.button !== 2 && e.clientX === 0 && e.clientY === 0) { const r = li.getBoundingClientRect(); openMenu(t, r.left + 12, r.bottom + 4); } // keyboard
+    else openMenu(t, e.clientX, e.clientY);
+  });
+  // a change made from the menu: saved, shown, with "Annuler" bringing the task back as it was
+  // (for "Répéter", the whole data: rules and other occurrences change too)
+  function menuChange(t, msg, fn, whole) {
+    const before = whole ? structuredClone(db) : { ...t };
+    closeMenu(false);
+    fn(); reveal(t); ui.flash = t.id; save(); render(); focusCard(t.id);
+    toast(msg, 'Annuler', () => {
+      if (whole) db = before;
+      else { const x = db.tasks.find(y => y.id === before.id); if (!x) return; Object.keys(x).forEach(k => delete x[k]); Object.assign(x, before); }
+      save(); render();
+    });
+  }
+  const setTaskDate = (t, d) => { d = snapDay(d); if (d !== shownDate(t)) menuChange(t, `Déplacée au ${fmtLong.format(parse(d))}`, () => moveTo(t, d)); else closeMenu(true); };
+  const setTaskDue = (t, d) => { if ((t.due || '') !== d) menuChange(t, d ? `Deadline : ${fmtLong.format(parse(d))}` : 'Deadline retirée', () => { if (d) t.due = d; else delete t.due; }); else closeMenu(true); };
+  menu.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || !menuTask) return;
+    const t = menuTask;
+    if (b.getAttribute('aria-disabled') === 'true') return;
+    if (b.dataset.panel) { showMenu(b.dataset.panel); return; }
+    if (b.dataset.act === 'back') { showMenu('', `[data-panel="${menu.dataset.panel}"]`); return; }
+    if (b.dataset.state) { closeMenu(false); if (t.state === b.dataset.state) focusCard(t.id); else setState(t, b.dataset.state); return; }
+    if ('id' in b.dataset && b.classList.contains('msw')) {
+      const id = b.dataset.id || null, p = proj(id);
+      if ((t.projectId || null) === id) { closeMenu(true); return; }
+      menuChange(t, p ? `Tag : ${p.name}` : 'Tag retiré', () => { t.projectId = id; rememberTag(id); });
+      return;
+    }
+    if ('date' in b.dataset) { setTaskDate(t, b.dataset.date); return; }
+    if ('due' in b.dataset) { setTaskDue(t, b.dataset.due); return; }
+    if ('rep' in b.dataset) {
+      const k = b.dataset.rep;
+      if (k === repeatKey(serie(t.seriesId))) { closeMenu(true); return; }
+      menuChange(t, k ? 'Répète ' + REPEAT[k].label.toLowerCase() : 'Ne se répète plus', () => setRepeat(t, k), true);
+      return;
+    }
+    if (b.dataset.pick) {
+      const input = b.previousElementSibling, v = input.value;
+      if (!isDueDay(v) || !input.checkValidity()) { input.reportValidity(); input.focus(); return; }
+      b.dataset.pick === 'date' ? setTaskDate(t, v) : setTaskDue(t, v);
+      return;
+    }
+    if (b.dataset.act === 'nodue') { setTaskDue(t, ''); return; }
+    closeMenu(false);
+    if (b.dataset.act === 'edit') openEditor(t);
+    else if (b.dataset.act === 'delete') deleteTask(t);
+  });
+  // keyboard: ↑ ↓ go from row to row (a row of icons counts as one stop), ← → within a row of icons;
+  // → opens a panel, ← or Échap comes back from it, Échap closes; in the date field Entrée confirms
+  menu.addEventListener('keydown', e => {
+    const el = document.activeElement, panel = menu.dataset.panel;
+    if (e.key === 'Escape') {
+      e.preventDefault(); e.stopPropagation();
+      panel ? showMenu('', `[data-panel="${panel}"]`) : closeMenu(true); return;
+    }
+    if (el.tagName === 'INPUT') { if (e.key === 'Enter') { e.preventDefault(); el.nextElementSibling.click(); } return; }
+    const row = el.closest('.mrow');
+    if (row && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      e.preventDefault();
+      const bs = [...row.querySelectorAll('button')], i = bs.indexOf(el);
+      bs[(i + (e.key === 'ArrowRight' ? 1 : -1) + bs.length) % bs.length].focus(); return;
+    }
+    if (e.key === 'ArrowRight' && el.dataset.panel) { e.preventDefault(); el.click(); return; }
+    if (e.key === 'ArrowLeft' && panel) { e.preventDefault(); showMenu('', `[data-panel="${panel}"]`); return; }
+    const stops = [...menu.querySelectorAll(':scope > .mrow, :scope > button, .mpick > *')];
+    const at = stops.findIndex(s => s === el || s.contains(el));
+    const go = s => (s.classList.contains('mrow') ? s.querySelector('[aria-checked="true"]') || s.querySelector('button') : s).focus();
+    if (e.key === 'ArrowDown') { e.preventDefault(); go(stops[(at + 1) % stops.length]); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); go(stops[(at - 1 + stops.length) % stops.length]); }
+    else if (e.key === 'Home') { e.preventDefault(); go(stops[0]); }
+    else if (e.key === 'End') { e.preventDefault(); go(stops[stops.length - 1]); }
+  });
+  menu.addEventListener('contextmenu', e => e.preventDefault());
+  menu.addEventListener('focusout', e => { if (!menu.hidden && e.relatedTarget && !menu.contains(e.relatedTarget)) closeMenu(false); }); // Tab out of the menu
+  document.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target)) closeMenu(false); });
+  addEventListener('scroll', () => closeMenu(false), true);
+  addEventListener('resize', () => closeMenu(false));
 
   filtersEl.addEventListener('click', e => {
     const chip = e.target.closest('.chip');
@@ -2275,7 +2492,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
 
   /* shortcuts */
   document.addEventListener('keydown', e => {
-    if (editor.open || creator.open || tagMgr.open || exporter.open || importer.open || $('#help').open || !appMenu.hidden || addPP.isOpen() || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input,select,textarea')) return;
+    if (editor.open || creator.open || tagMgr.open || exporter.open || importer.open || $('#help').open || !appMenu.hidden || !menu.hidden || addPP.isOpen() || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input,select,textarea')) return;
     if (e.key === 'a' || e.key === 'A') { e.preventDefault(); openCreator(); }
     else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); moveTaskFocus(e.key === 'ArrowDown' ? 1 : -1); }
     else if (e.key === 'ArrowLeft') { if (!moveTaskColumn(-1)) $('#prev').click(); }
@@ -2287,7 +2504,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
 
   // "Adaptatif" re-lays out when the window crosses a size threshold
   [mqSmall].forEach(mq => mq.addEventListener('change', () => { if (ui.view === 'rolling') render(); }));
-  mqPhone.addEventListener('change', () => { ui.moreOpen = false; renderFilters(); });
+  mqPhone.addEventListener('change', () => { ui.moreOpen = false; renderFilters(); closeMenu(false); });
 
   /* ---------- another tab of Ancrage saved: this tab takes its data, so it never writes an old copy over it ---------- */
   addEventListener('storage', e => {
@@ -2299,6 +2516,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     if (!Array.isArray(d.series)) d.series = [];
     db = d;
     toastEl.hidden = true; clearTimeout(toastTimer); // its "Annuler" would bring this tab's old copy back
+    closeMenu(false);
     if (editing) {
       const t = db.tasks.find(x => x.id === editing.id);
       if (t) refreshEditor(t); else { editor.close(); toast('Tâche supprimée dans un autre onglet'); }
