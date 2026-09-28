@@ -57,7 +57,7 @@ button,input,select{font:inherit;color:inherit}
 .app{max-width:1640px;margin:0 auto;padding-inline:20px;padding-block:0 32px}
 
 /* Header */
-.top{display:flex;align-items:center;justify-content:flex-start;gap:12px 8px;flex-wrap:wrap;padding-block:20px 16px}
+.top{display:flex;align-items:center;justify-content:flex-start;gap:12px 8px;flex-wrap:wrap;padding-block:20px 4px}
 .top .views{margin-left:8px} /* a little more air between the week navigation and the view / help / ⋯ group */
 .brand{display:flex;align-items:center;gap:10px}
 .brand svg{flex:none}
@@ -122,7 +122,7 @@ dialog{overflow:visible}
 .kbd{font-family:var(--f-mono);font-size:10.5px;border:1px solid currentColor;border-radius:4px;padding:0 4px;margin-left:8px;opacity:.55}
 
 /* Filters */
-.bar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-block:14px 12px}
+.bar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-block:8px 12px}
 .bar #add-open{flex:none;margin-left:auto} /* always on the tags' row, at the right */
 .filters{flex:1;min-width:0;display:flex;gap:6px;flex-wrap:wrap} /* too many tags: they wrap inside their own block, whose top lines up with the button */
 .chip{height:30px;padding:0 11px 0 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;color:var(--ink-2)}
@@ -144,7 +144,7 @@ dialog{overflow:visible}
 .more-pop .chip{width:100%;justify-content:flex-start;flex:none}
 .more-pop .chip .n{margin-left:auto}
 
-.note{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);background:var(--surface);border:1px dashed var(--line-2);border-radius:10px;padding:8px 12px} /* sits above the tags row, whose own top padding spaces it */
+.note{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);background:var(--surface);border:1px dashed var(--line-2);border-radius:10px;padding:8px 12px;margin-top:6px} /* sits above the tags row, whose own top padding spaces it */
 .note b{color:var(--ink)}
 .note .ghost{height:28px;padding:0 10px;font-size:12.5px}
 
