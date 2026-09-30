@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#ECEFF3;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
-<title>Ancrage</title>
+<title>To-do list</title>
 <!-- icon: inline so the tab shows it even when this file is opened on its own; the manifest and PNGs next to it serve the installed app -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23141413'/%3E%3Cg transform='translate(2 2.15)' fill='none' stroke='%23faf9f5' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='14' cy='5.5' r='2.8'/%3E%3Cpath d='M14 8.3V25M8.5 12.5h11M4 16.5c.8 5.2 5 8.5 10 8.5s9.2-3.3 10-8.5M4 16.5l-1.6 2.6M4 16.5l3 .4M24 16.5l1.6 2.6M24 16.5l-3 .4'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -639,16 +639,13 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
 <div class="app">
   <header class="top">
     <div class="brand">
-      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><!-- anchor -->
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><!-- checked box -->
         <g fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="14" cy="5.5" r="2.8"/>
-          <path d="M14 8.3V25"/>
-          <path d="M8.5 12.5h11"/>
-          <path d="M4 16.5c.8 5.2 5 8.5 10 8.5s9.2-3.3 10-8.5"/>
-          <path d="M4 16.5l-1.6 2.6M4 16.5l3 .4M24 16.5l1.6 2.6M24 16.5l-3 .4"/>
+          <rect x="3.5" y="3.5" width="21" height="21" rx="5.5"/>
+          <path d="M9 14.5l3.6 3.6 6.9-7.6"/>
         </g>
       </svg>
-      <span class="logo">Ancrage</span>
+      <span class="logo">To-do list</span>
     </div>
     <nav class="week" aria-label="Navigation">
       <div class="week-label">
@@ -909,7 +906,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     <label class="im-drop" id="im-drop">
       <input type="file" id="im-file" class="sr-only" accept=".json,application/json">
       <svg width="22" height="22" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 10V3M5 5.7l3-3 3 3M3 11v1.5c0 .6.4 1 1 1h8c.6 0 1-.4 1-1V11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span><b id="im-file-label">Choisir un fichier JSON</b><small>ou le déposer ici · un fichier exporté depuis Ancrage</small></span>
+      <span><b id="im-file-label">Choisir un fichier JSON</b><small>ou le déposer ici · un fichier exporté depuis To-do list</small></span>
     </label>
     <p class="tm-hint" id="im-msg" role="status" hidden></p>
     <fieldset class="ex-opts" id="im-modes" disabled>
@@ -2367,7 +2364,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
     const tasks = [...exTasks(scope)].sort((a, b) => shownDate(a).localeCompare(shownDate(b)) || ORDER[a.state] - ORDER[b.state] || rankOf(a) - rankOf(b) || a.created - b.created);
     const used = new Set(tasks.map(t => t.projectId));
     return JSON.stringify({
-      app:'Ancrage', format:2, exportedAt:new Date().toISOString(),
+      app:'To-do list', format:2, exportedAt:new Date().toISOString(),
       scope: scope === 'all' ? 'toutes' : 'a-venir',
       tags: db.projects.filter(p => scope === 'all' || used.has(p.id)).map(p => ({ id:p.id, name:p.name, hue:p.hue })),
       tasks: tasks.map(t => ({
@@ -2387,7 +2384,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   exForm.addEventListener('submit', async e => {
     e.preventDefault();
     const scope = exScope(), data = exportJson(scope);
-    const filename = `ancrage-${todayIso()}.json`;
+    const filename = `todo-list-${todayIso()}.json`;
     const say = m => { exMsg.textContent = m; exMsg.hidden = false; };
     const dl = await downloadsP;
     if (!dl) {
@@ -2719,7 +2716,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   [mqSmall].forEach(mq => mq.addEventListener('change', () => { if (ui.view === 'rolling') render(); }));
   mqPhone.addEventListener('change', () => { ui.moreOpen = false; renderFilters(); closeMenu(false); });
 
-  /* ---------- another tab of Ancrage saved: this tab takes its data, so it never writes an old copy over it ---------- */
+  /* ---------- another tab of the app saved: this tab takes its data, so it never writes an old copy over it ---------- */
   addEventListener('storage', e => {
     if (e.key === KEY + '.theme') { document.documentElement.dataset.theme = e.newValue === 'dark' ? 'dark' : 'light'; syncTheme(); return; }
     if (e.key === KEY + '.weekend') { if ((e.newValue === '1') !== showWe) setWeekend(e.newValue === '1', false); return; }

@@ -1,7 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "ancrage", "runtimeExecutable": "node", "runtimeArgs": [".claude/serve.js"], "port": 8766 },
-    { "name": "ancrage-demo", "runtimeExecutable": "node", "runtimeArgs": [".claude/demo.js"], "port": 8767 }
+    { "name": "todo", "runtimeExecutable": "node", "runtimeArgs": [".claude/serve.js"], "port": 8766 },
+    { "name": "todo-demo", "runtimeExecutable": "node", "runtimeArgs": [".claude/demo.js"], "port": 8767 }
   ]
 }

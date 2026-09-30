@@ -1,9 +1,9 @@
 {
-  "name": "Ancrage",
-  "short_name": "Ancrage",
-  "description": "Planificateur de la semaine de travail centré sur aujourd'hui.",
+  "name": "To-do list",
+  "short_name": "To-do list",
+  "description": "To-do list organisée par semaine, centrée sur aujourd'hui.",
   "lang": "fr",
-  "start_url": "./ancrage.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ECEFF3",

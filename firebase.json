@@ -19,8 +19,8 @@
     ],
     "redirects": [
       {
-        "source": "/",
-        "destination": "/ancrage.html",
+        "source": "/ancrage.html",
+        "destination": "/",
         "type": 302
       }
     ],
