@@ -1,6 +1,6 @@
-# Publie l'application sur Firebase Hosting (https://ancrage-8e7e5.web.app) à chaque push sur main,
+# Publie l'application sur Firebase Hosting (https://todo-list-9149c.web.app) à chaque push sur main,
 # merge d'une pull request compris. Relançable à la main depuis l'onglet Actions.
-# Le secret FIREBASE_SERVICE_ACCOUNT_ANCRAGE_8E7E5 (clé du compte de service Firebase) est créé par
+# Le secret FIREBASE_SERVICE_ACCOUNT_TODO_LIST_9149C (clé du compte de service Firebase) est créé par
 # `firebase init hosting:github`.
 name: Publication Firebase
 
@@ -24,6 +24,6 @@ jobs:
       - uses: actions/checkout@v5
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANCRAGE_8E7E5 }}
-          projectId: ancrage-8e7e5
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TODO_LIST_9149C }}
+          projectId: todo-list-9149c
           channelId: live
