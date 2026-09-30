@@ -17,13 +17,6 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "redirects": [
-      {
-        "source": "/ancrage.html",
-        "destination": "/",
-        "type": 302
-      }
-    ],
     "headers": [
       {
         "source": "**/*.@(html|js|webmanifest)",
