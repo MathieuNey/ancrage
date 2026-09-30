@@ -6,7 +6,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#ECEFF3"> <!-- the installed app's title bar / status bar: the page background (--bg), set to the dark one by the theme scripts below -->
 <script>/* offline for the installed app (sw.js next to this file); absent or refused (artifact frame, file opened locally): the page works as before */
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !window.DEMO) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
 <script>/* theme before first paint: light unless dark was chosen (the system setting is not followed) */
 try { document.documentElement.dataset.theme = localStorage.getItem('semainier.v1.theme') === 'dark' ? 'dark' : 'light'; } catch { document.documentElement.dataset.theme = 'light'; }
 if (document.documentElement.dataset.theme === 'dark') document.querySelector('meta[name=theme-color]').content = '#0E1116';</script>
@@ -981,11 +981,15 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   const dayDiff = (a, b) => Math.round((parse(a) - parse(b)) / 864e5); // a − b, in days
   const snapWeekday = s => { const d = parse(s), wd = d.getDay(); return wd === 6 ? iso(addDays(d, 2)) : wd === 0 ? iso(addDays(d, 1)) : s; };
   const snapDay = s => showWe ? s : snapWeekday(s); // a day on screen: a weekend one goes to the Monday after while the weekend is hidden
+  const addWeekdays = (d, n) => { let x = d; for (let i = 0; i < Math.abs(n); i++) do x = addDays(x, Math.sign(n)); while (x.getDay() === 0 || x.getDay() === 6); return x; }; // n working days from d (n < 0: before)
 
   /* ---------- data ---------- */
   const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
+  const empty = () => ({ projects:[], tasks:[], series:[], sample:false });
+
+  /* Example tasks, only in the demo preview (.claude/demo.js sets window.DEMO): the last day of the plan is today, the four before on the previous working days */
   function seed() {
     const projects = [
       { id:'rh',   name:'Portail RH',   hue:255 },
@@ -1002,16 +1006,16 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       [['Migrer les historiques 2019–2022','mig','done'],['Soutenance de l’offre chez le prospect','av','done'],['Estimer les user stories du sprint 15','rh','done'],['Débrief entretien avec le manager','rec','done'],['Commander les licences de l’outil ETL','mig','waiting'],['Session de formation Git avancé','form','done'],['Relancer le fournisseur ETL','mig','todo']],
       [['Finaliser l’export des contrats vers le nouveau SI','mig','doing'],['Exécuter la recette de non-régression','rh','todo'],['Rédiger le compte rendu du COPIL','int','todo'],['Répondre au prospect sur l’hébergement','av','todo'],['Planifier les entretiens de la semaine prochaine','rec','todo'],['Préparer la démo du module congés','rh','todo'],['Retour client sur le chiffrage du lot 2','av','waiting'],['Validation du plan de bascule par la DSI','mig','waiting'],['Point hebdo équipe','int','done'],['Saisir les temps de la semaine','int','done']]
     ];
-    const wk = defaultWeek(); let n = 0;
-    const tasks = plan.flatMap((day, i) => day.map(([title, projectId, state]) =>
-      fakeDates({ id:uid(), title, projectId, state, date:iso(addDays(wk, i)), created:++n })));
+    const today = parse(snapDay(todayIso())), day = i => addWeekdays(today, i - 4); let n = 0;
+    const tasks = plan.flatMap((d, i) => d.map(([title, projectId, state]) =>
+      fakeDates({ id:uid(), title, projectId, state, date:iso(day(i)), created:++n })));
     const due = { 'Validation du plan de bascule par la DSI':2, 'Rédiger le compte rendu du COPIL':4, 'Répondre au prospect sur l’hébergement':7, 'Préparer la démo du module congés':8 };
-    tasks.forEach(t => { if (t.title in due) t.due = iso(addDays(wk, due[t.title])); });
-    return { projects, tasks:[...tasks, ...nextWeekSample(wk)], series:[], sample:true, sampleNext:true };
+    tasks.forEach(t => { if (t.title in due) t.due = iso(day(due[t.title])); });
+    return { projects, tasks:[...tasks, ...nextWeekSample(addWeekdays(today, 1))], series:[], sample:true, sampleNext:true };
   }
 
-  /* A light next week for the examples: a few planned to-dos, nothing started yet */
-  function nextWeekSample(wk) {
+  /* A light next five working days for the examples, from start: a few planned to-dos, nothing started yet */
+  function nextWeekSample(start) {
     const plan = [
       [['Point hebdo équipe','int'],['Lancer la bascule en pré-production','mig'],['Envoyer l’offre finale au prospect','av']],
       [['Recette du module congés avec les RH','rh'],['Entretien candidat data engineer','rec']],
@@ -1019,9 +1023,8 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
       [['Bilan de la migration avec la DSI','mig']],
       [['Rétrospective d’équipe','int'],['Saisir les temps de la semaine','int']]
     ];
-    const next = addDays(wk, 7);
     return plan.flatMap((day, i) => day.map(([title, projectId], j) =>
-      fakeDates({ id:uid(), title, projectId, state:'todo', date:iso(addDays(next, i)), created:100 + i * 10 + j })));
+      fakeDates({ id:uid(), title, projectId, state:'todo', date:iso(addWeekdays(start, i)), created:100 + i * 10 + j })));
   }
 
   /* Plausible made-up timestamps for example tasks (stable per title) */
@@ -1049,13 +1052,13 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
         if (noStart.length) { noStart.forEach(t => { t.doingAt = Date.now(); }); try { localStorage.setItem(KEY, JSON.stringify(d)); } catch {} }
         if (d.sample && !d.sampleNext) {          // examples saved before next week had any
           const first = d.tasks.map(t => t.date).sort()[0];
-          if (first) d.tasks.push(...nextWeekSample(monday(parse(first))));
+          if (first) d.tasks.push(...nextWeekSample(addDays(monday(parse(first)), 7)));
           d.sampleNext = true;
         }
         return d;
       }
     } catch {}
-    return seed();
+    return window.DEMO ? seed() : empty(); // a first visit starts empty; the examples are for the demo preview
   }
   const save = () => {
     db.series.forEach(s => { // template = latest occurrence
@@ -1955,7 +1958,7 @@ dialog::backdrop{background:rgb(10 14 20 / .45)}
   }));
   $('#keep-sample').onclick = () => { db.sample = false; save(); render(); };
   $('#clear-sample').onclick = () => {
-    const before = db; db = { projects:[], tasks:[], series:[], sample:false }; ui.filter.clear(); save(); saveUi(); render();
+    const before = db; db = empty(); ui.filter.clear(); save(); saveUi(); render();
     toast('Exemples effacés', 'Annuler', () => { db = before; save(); render(); });
   };
 
